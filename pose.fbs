@@ -4,6 +4,7 @@ namespace Pose;
 table Keypoint {
   x: float;
   y: float;
+  z: float;
   confidence: float;
 }
 

@@ -36,7 +36,8 @@ impl<'a> flatbuffers::Follow<'a> for Keypoint<'a> {
 impl<'a> Keypoint<'a> {
   pub const VT_X: flatbuffers::VOffsetT = 4;
   pub const VT_Y: flatbuffers::VOffsetT = 6;
-  pub const VT_CONFIDENCE: flatbuffers::VOffsetT = 8;
+  pub const VT_Z: flatbuffers::VOffsetT = 8;
+  pub const VT_CONFIDENCE: flatbuffers::VOffsetT = 10;
 
   #[inline]
   pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -49,6 +50,7 @@ impl<'a> Keypoint<'a> {
   ) -> flatbuffers::WIPOffset<Keypoint<'bldr>> {
     let mut builder = KeypointBuilder::new(_fbb);
     builder.add_confidence(args.confidence);
+    builder.add_z(args.z);
     builder.add_y(args.y);
     builder.add_x(args.x);
     builder.finish()
@@ -70,6 +72,13 @@ impl<'a> Keypoint<'a> {
     unsafe { self._tab.get::<f32>(Keypoint::VT_Y, Some(0.0)).unwrap()}
   }
   #[inline]
+  pub fn z(&self) -> f32 {
+    // Safety:
+    // Created from valid Table for this object
+    // which contains a valid value in this slot
+    unsafe { self._tab.get::<f32>(Keypoint::VT_Z, Some(0.0)).unwrap()}
+  }
+  #[inline]
   pub fn confidence(&self) -> f32 {
     // Safety:
     // Created from valid Table for this object
@@ -87,6 +96,7 @@ impl flatbuffers::Verifiable for Keypoint<'_> {
     v.visit_table(pos)?
      .visit_field::<f32>("x", Self::VT_X, false)?
      .visit_field::<f32>("y", Self::VT_Y, false)?
+     .visit_field::<f32>("z", Self::VT_Z, false)?
      .visit_field::<f32>("confidence", Self::VT_CONFIDENCE, false)?
      .finish();
     Ok(())
@@ -95,6 +105,7 @@ impl flatbuffers::Verifiable for Keypoint<'_> {
 pub struct KeypointArgs {
     pub x: f32,
     pub y: f32,
+    pub z: f32,
     pub confidence: f32,
 }
 impl<'a> Default for KeypointArgs {
@@ -103,6 +114,7 @@ impl<'a> Default for KeypointArgs {
     KeypointArgs {
       x: 0.0,
       y: 0.0,
+      z: 0.0,
       confidence: 0.0,
     }
   }
@@ -120,6 +132,10 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> KeypointBuilder<'a, 'b, A> {
   #[inline]
   pub fn add_y(&mut self, y: f32) {
     self.fbb_.push_slot::<f32>(Keypoint::VT_Y, y, 0.0);
+  }
+  #[inline]
+  pub fn add_z(&mut self, z: f32) {
+    self.fbb_.push_slot::<f32>(Keypoint::VT_Z, z, 0.0);
   }
   #[inline]
   pub fn add_confidence(&mut self, confidence: f32) {
@@ -145,6 +161,7 @@ impl core::fmt::Debug for Keypoint<'_> {
     let mut ds = f.debug_struct("Keypoint");
       ds.field("x", &self.x());
       ds.field("y", &self.y());
+      ds.field("z", &self.z());
       ds.field("confidence", &self.confidence());
       ds.finish()
   }
