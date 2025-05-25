@@ -1,0 +1,15 @@
+// pose.fbs
+namespace Pose;
+
+table Keypoint {
+  x: float;
+  y: float;
+  confidence: float;
+}
+
+table PoseFrame {
+  keypoints: [Keypoint];
+}
+
+root_type PoseFrame;
+
