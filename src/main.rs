@@ -17,7 +17,6 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, setup)
-        //.add_systems(Update, receive_and_update_keypoints)
         .add_systems(
             Update,
             (receive_keypoints, update_keypoint_transforms, draw_skeleton),

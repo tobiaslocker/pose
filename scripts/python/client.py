@@ -65,7 +65,6 @@ def run(model: str, num_poses: int,
       height: The height of the frame captured from the camera.
   """
 
-
     # Start capturing video input from the camera
     cap = cv2.VideoCapture(camera_id)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -119,7 +118,6 @@ def run(model: str, num_poses: int,
             )
 
         image = cv2.flip(image, 1)
-        print(image.shape)
 
         # Convert the image from BGR to RGB as required by the TFLite model.
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -146,7 +144,6 @@ def run(model: str, num_poses: int,
                                                     z=landmark.z) for landmark
                     in pose_landmarks
                 ])
-                print(pose_landmarks_proto)
                 mp_drawing.draw_landmarks(
                     current_frame,
                     pose_landmarks_proto,
@@ -163,9 +160,6 @@ def run(model: str, num_poses: int,
                     y = landmark.y
                     z = landmark.z
                     confidence = landmark.visibility  # or use landmark.presence
-                    # kp = Keypoint.CreateKeypoint(builder, x, y, confidence)
-                    print(f"x = {x}, y = {y}, z = {z}")
-
 
                     kp = Keypoint.KeypointStart(builder)
                     Keypoint.KeypointAddX(builder, x)
@@ -185,9 +179,6 @@ def run(model: str, num_poses: int,
                 PoseFrame.PoseFrameAddKeypoints(builder, keypoints_vec)
                 pose_frame = PoseFrame.PoseFrameEnd(builder)
                 builder.Finish(pose_frame)
-                # keypoints_vec = builder.CreateVector(all_keypoints)
-                # pose_frame = PoseFrame.CreatePoseFrame(builder, keypoints_vec)
-                # builder.Finish(pose_frame)
 
                 buf = builder.Output()
                 msg_len = struct.pack('>I', len(buf))  # 4-byte length prefix
