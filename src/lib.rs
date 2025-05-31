@@ -4,8 +4,10 @@ use bevy::prelude::*;
 use std::thread;
 use tokio::sync::mpsc;
 
-mod generated;
-use generated::pose_generated::pose::PoseFrame;
+#[allow(warnings)]
+#[path = "../generated/rust/pose_generated.rs"]
+mod pose_generated;
+use pose_generated::pose::PoseFrame;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Keypoint {
@@ -81,8 +83,6 @@ pub fn receive_keypoints(mut receiver: ResMut<PoseReceiver>, mut keypoints: ResM
     while let Ok(new_kps) = receiver.0.try_recv() {
         let width = 1920.0;
         let height = 1080.0;
-
-        println!("{:?}", keypoints.0);
 
         keypoints.0 = new_kps
             .iter()
