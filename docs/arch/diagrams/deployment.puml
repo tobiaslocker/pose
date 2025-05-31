@@ -1,0 +1,15 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+LAYOUT_WITH_LEGEND()
+title C4 Deployment Diagram - Local Development
+
+' Deployment Nodes
+Deployment_Node(dev_machine, "Developer Machine", "macOS/Linux", "Local development environment") {
+    Container(python_client, "Pose Client", "Python 3.12 + MediaPipe", "Captures and sends pose frames")
+    Container(rust_server, "Rust Server", "Rust + Bevy", "Receives frames, matches poses, visualizes result")
+
+    Rel(python_client, rust_server, "TCP connection (port 9000)", "FlatBuffers")
+}
+
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+Person(user, "Player", "Interacts with the game using camera input")
+
+System_Boundary(c1, "Pose System") {
+    Container(client, "Pose Capture Client", "Python (later C++)", "Captures pose from webcam and sends it to the server")
+    Container(serializer, "Pose Serializer", "FlatBuffers", "Serializes landmark data for network transmission")
+    Container(server, "Server Core", "Rust", "Receives and processes pose data")
+    Container(deserializer, "Pose Deserializer", "Rust", "Deserializes FlatBuffer pose data")
+    Container(matcher, "Pose Matcher / Score Evaluator", "Rust", "Compares poses and calculates similarity score")
+    Container(visualizer, "Visualization Engine", "Bevy", "Displays live and prerecorded poses in 3D")
+    Container(contentRecorder, "Content Recorder", "Rust", "Stores prerecorded choreography")
+}
+
+Rel(user, client, "Streams pose via camera")
+Rel(client, serializer, "Serializes pose data")
+Rel(serializer, server, "Sends FlatBuffer over TCP")
+Rel(server, deserializer, "Deserializes FlatBuffer")
+Rel(deserializer, matcher, "Sends pose data for comparison")
+Rel(matcher, visualizer, "Updates scene and score")
+Rel(contentRecorder, visualizer, "Provides choreography data")
+
+@enduml
+
