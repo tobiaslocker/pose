@@ -25,11 +25,23 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from mediapipe.framework.formats import landmark_pb2
 
+import flatbuffers
 import socket
 import struct
+
+
+import sys
+import os
+
+# Add generated/python to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+generated_path = os.path.join(project_root, "generated", "python")
+
+print("Adding to sys.path:", generated_path)
+sys.path.append(generated_path)
+
 import Pose.PoseFrame as PoseFrame
 import Pose.Keypoint as Keypoint
-import flatbuffers
 
 
 mp_pose = mp.solutions.pose
