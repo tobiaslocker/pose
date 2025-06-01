@@ -1,0 +1,21 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Define container scope (optional title)
+LAYOUT_WITH_LEGEND()
+title C4 Dynamic View: Pose Data Flow (Runtime)
+
+Person(player, "Player")
+Container(client, "Pose Client", "Python", "Captures pose via MediaPipe and sends FlatBuffer")
+Container(server, "Rust Server", "Rust", "Receives and processes pose data")
+Component(deserializer, "Deserializer", "FlatBuffers → Rust structs")
+Component(matcher, "Pose Matcher", "Compares input with reference pose")
+Component(visualizer, "Bevy Visualizer", "Visualizes poses and score")
+
+Rel(player, client, "1. Starts client")
+Rel(client, server, "2. Connects and sends pose frames (TCP, FlatBuffer)")
+Rel(server, deserializer, "3. Deserializes FlatBuffer to Rust structs")
+Rel(deserializer, matcher, "4. Sends structured pose data for matching")
+Rel(matcher, visualizer, "5. Sends result for visualization")
+
+@enduml

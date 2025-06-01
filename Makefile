@@ -1,20 +1,38 @@
 # Makefile
-
 PROJECT_ROOT := $(realpath .)
 VENV_DIR := $(PROJECT_ROOT)/scripts/python/venv
 PYTHON := python3.12
 REQUIREMENTS := $(PROJECT_ROOT)/scripts/python/requirements.txt
 
 FBS_FILE := $(PROJECT_ROOT)/schemas/pose.fbs
-# FBS_PY_OUTPUT := $(PROJECT_ROOT)/scripts/python/generated
 FBS_PY_OUTPUT := $(PROJECT_ROOT)/generated/python
 FBS_RS_OUTPUT := $(PROJECT_ROOT)/generated/rust
+
+DOCS_DIR := docs/arch/diagrams
+PUML_FILES := $(wildcard $(DOCS_DIR)/*.puml)
+SVG_FILES := $(PUML_FILES:.puml=.svg)
+
 
 MODEL := $(PROJECT_ROOT)/models/pose_landmarker_lite.task
 MODEL_URL := https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task
 
-.PHONY: all flatbuffers python-deps venv run clean rust-deps help fetch-models
+.PHONY: all flatbuffers python-deps venv run clean rust-deps help fetch-models docs
 
+## Generate all documentation assets (e.g. diagrams)
+docs:
+	@echo "Generating ADR log..."
+	@python3 scripts/python/gen_adr_log.py
+	@echo "Documentation assets regenerated."
+
+
+$(DOCS_DIR)/%.svg: $(DOCS_DIR)/%.puml
+	@echo "[PLANTUML] Generating $@"
+	@plantuml -tsvg -o . $<
+
+## Clean generated documentation assets
+docs-clean:
+	@echo "[PLANTUML] Cleaning generated diagrams..."
+	@rm -f $(DOCS_DIR)/*.svg
 ## Build everything
 all: flatbuffers python-deps fetch-models
 

@@ -1,0 +1,31 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(player, "Player", "Performs movements in front of the camera")
+Person(creator, "Content Creator", "Records choreographies using the system")
+
+System(game, "Pose Game", "Camera-controlled game for dancing and fitness")
+
+System_Ext(camera, "Camera", "Captures real-time video of the player")
+System_Ext(mediapipe, "MediaPipe", "Detects human poses from video")
+System_Ext(flatbuffers, "FlatBuffers", "Serializes/deserializes pose data")
+System_Ext(bevy, "Bevy Engine", "Visualizes poses and game feedback")
+System_Ext(pythonClient, "Python Pose Client", "Handles camera + live pose detection")
+System_Ext(rustServer, "Rust Game Server", "Runs scoring & coordination logic")
+
+player --> camera : "Performs dance moves"
+creator --> game : "Provides recorded choreography"
+
+camera --> pythonClient : "Streams video"
+pythonClient --> mediapipe : "Detects pose"
+pythonClient --> flatbuffers : "Serializes pose"
+pythonClient --> rustServer : "Sends live pose stream"
+
+rustServer --> flatbuffers : "Deserializes pose data"
+rustServer --> bevy : "Sends poses & feedback for visualization"
+rustServer --> game : "Scores performance"
+
+game --> bevy : "Displays both recorded & live poses"
+
+@enduml
+
