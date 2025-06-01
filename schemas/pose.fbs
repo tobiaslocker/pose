@@ -1,16 +1,27 @@
-// pose.fbs
-namespace Pose;
+namespace Detection;
 
-table Keypoint {
+table Availability {
+  visibility: float;
+  presence: float;
+}
+
+table Landmark {
   x: float;
   y: float;
   z: float;
-  confidence: float;
+  availability: Availability;  // Optional via null
 }
 
-table PoseFrame {
-  keypoints: [Keypoint];
+table PoseDetectionResult {
+  landmarks: [Landmark];
 }
 
-root_type PoseFrame;
+union DetectionPayload {
+  PoseDetectionResult
+}
 
+table DetectionMessage {
+  payload: DetectionPayload;
+}
+
+root_type DetectionMessage;
