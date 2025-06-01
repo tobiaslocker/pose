@@ -1,16 +1,32 @@
-// pose.fbs
-namespace Pose;
+namespace Detection;
 
-table Keypoint {
+// Represents confidence scores for a landmark
+table Availability {
+  visibility: float;
+  presence: float;
+}
+
+// A 3D landmark with optional availability info
+table Landmark {
   x: float;
   y: float;
   z: float;
-  confidence: float;
+  availability: Availability;  // Optional via null
 }
 
-table PoseFrame {
-  keypoints: [Keypoint];
+// A pose detection result containing multiple landmarks
+table PoseDetectionResult {
+  landmarks: [Landmark];
 }
 
-root_type PoseFrame;
+// Add more types like hand/face in the future
+union DetectionPayload {
+  PoseDetectionResult
+}
 
+// A generic message that wraps different detection types
+table DetectionMessage {
+  payload: DetectionPayload;
+}
+
+root_type DetectionMessage;
