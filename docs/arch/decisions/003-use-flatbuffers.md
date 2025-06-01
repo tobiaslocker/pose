@@ -1,6 +1,6 @@
 # Use FlatBuffers over TCP for Pose Data Serialization and Transport
 
-![Status: Accepted](https://img.shields.io/badge/status-accepted-brightgreen)
+![](https://img.shields.io/badge/status-accepted-brightgreen)
 
 ## Date
 

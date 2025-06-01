@@ -1,6 +1,6 @@
 # Use MediaPipe Pose Landmarker for Pose Detection
 
-![Status: Accepted](https://img.shields.io/badge/status-accepted-brightgreen)
+![](https://img.shields.io/badge/status-accepted-brightgreen)
 
 ## Date
 

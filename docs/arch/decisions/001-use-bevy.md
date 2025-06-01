@@ -1,6 +1,6 @@
 # Use Bevy for Visualization and Game Logic
 
-![Status: Accepted](https://img.shields.io/badge/status-accepted-brightgreen)
+![](https://img.shields.io/badge/status-accepted-brightgreen)
 
 ## Date
 
