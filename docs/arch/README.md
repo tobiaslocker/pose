@@ -19,6 +19,23 @@ It loosely follows Arc42 and uses [C4 Model](https://c4model.com/) diagrams for 
 1. [Glossary](12-glossary.md)
 1. [References]
 
+## TODO Checklist
+
+Progress on documenting the architecture:
+
+- [x] 03 System Scope and Context
+- [x] 05 Building Block View
+- [x] 09 Architecture Decisions
+- [ ] 01 Introduction
+- [ ] 02 Constraints
+- [ ] 04 Solution Strategy
+- [ ] 06 Runtime View
+- [ ] 07 Deployment View
+- [ ] 08 Cross-cutting Concepts
+- [ ] 10 Quality Requirements
+- [ ] 11 Risks and Technical Debt
+- [ ] 12 Glossary
+
 ---
 
 > This documentation is maintained using the **docs-as-code** approach. Contributions welcome!
