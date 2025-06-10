@@ -17,21 +17,20 @@ It loosely follows Arc42 and uses [C4 Model](https://c4model.com/) diagrams for 
 1. [Quality Requirements](10-quality-requirements.md)
 1. [Risks and Technical Debt](11-risks-and-technical-debt.md)
 1. [Glossary](12-glossary.md)
-1. [References]
 
 ## TODO Checklist
 
 Progress on documenting the architecture:
 
-- [x] 03 System Scope and Context
-- [x] 05 Building Block View
-- [x] 09 Architecture Decisions
 - [ ] 01 Introduction
 - [ ] 02 Constraints
+- [x] 03 System Scope and Context
 - [ ] 04 Solution Strategy
+- [x] 05 Building Block View
 - [ ] 06 Runtime View
 - [ ] 07 Deployment View
 - [ ] 08 Cross-cutting Concepts
+- [x] 09 Architecture Decisions
 - [ ] 10 Quality Requirements
 - [ ] 11 Risks and Technical Debt
 - [ ] 12 Glossary
