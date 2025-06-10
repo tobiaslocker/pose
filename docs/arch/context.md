@@ -1,47 +1,53 @@
 ## System Context
 
-The purpose of this project is to develop a game controlled entirely by a camera. Inspired by games like
-“Just Dance,” the core idea is to offer an engaging, movement-based experience where players try to mirror
-a prerecorded choreography as accurately as possible.
+The system enables gesture- and movement-based interaction by processing live camera input to detect 
+human poses in real time. These poses are matched against predefined motion sequences and visualized 
+to provide immediate feedback to the user.
 
-- Choreography is captured in advance using the same pose-detection system as the player.  
-- Both recorded and live poses are visualized in real time, providing immediate feedback.  
-- The game compares live player input against recorded content to compute a matching score for scoring,
-  progression, or feedback.
+### Purpose and Scope
 
-While dance is the primary use case, the system is designed to be extensible to other movement-based
-experiences (e.g., boxing, fitness routines, motion-based rehabilitation). We aim to modularize motion
-input, real-time detection, and motion matching so that the same core can support multiple front ends or
-devices.
+The system serves as a flexible core for various movement-based applications, including but not limited 
+to:  
+- Games  
+- Fitness and exercise tracking  
+- Motion-based rehabilitation  
+- Interactive installations  
+
+The architecture is designed to be modular and adaptable across platforms:  
+- Desktop  
+- Mobile (iOS/Android)  
+- Browser-based (WASM)  
+- Embedded systems  
+
+### Key Concepts
+
+- **Input:** Live video stream from a camera.  
+- **Processing:** Detection of body landmarks from video frames.  
+- **Matching:** Real-time comparison of live motion with predefined sequences.  
+- **Output:** Visualization of poses and performance feedback.  
 
 ### Target Environments
 
-1. **Development Environment (Local)**  
-   - Standard webcam for pose capture.  
-   - Desktop or laptop capable of running MediaPipe and Bevy in parallel.  
-   - Local communication between the pose client and the Rust-based game (initially TCP, later
-     WebSockets).
+#### Development
 
-2. **Production or Extended Setups**  
-   - Hardware placement (camera height, lighting) and platform capabilities (CPU/GPU) can influence
-     performance.  
-   - Mobile or embedded devices may act as the controller (e.g., Android tablet, Raspberry Pi).  
-   - Browser-only variant (WASM) where both inference (MediaPipe JS) and rendering (Bevy WASM) occur
-     client-side, communicating over WebSockets.
+- Standard webcam for live capture.  
+- Pose Detection Server and Visualization Client run locally.  
+- Communication currently uses FlatBuffers over TCP.  
+
+#### Production / Extended
+
+- Pose Detection Server may run on a separate device (e.g. mobile phone, embedded).  
+- Visualization Client can run standalone (desktop, browser, embedded).  
+- Communication planned to move to WebSockets (WSS for secure connections).  
+- Browser-based variants may run both detection and visualization client-side.  
 
 ### System Context Diagram
 
 ![System Context](diagrams/context.svg)
 
-### Environment
+### Environment Notes
 
-- **Development**  
-  - A standard webcam streams live pose data.  
-  - MediaPipe runs on the same machine as the Bevy game.  
-  - The controller and game communicate locally (now over WebSockets).
-
-- **Production**  
-  - Controller could run on a separate device (desktop, mobile, or embedded).  
-  - Browser clients connect via WSS (TLS) for in-browser inference and rendering.  
-  - Network considerations (firewalls, NAT) influence how WebSocket connections are established.  
-
+- The current prototype uses TCP/FlatBuffers with a Python-based Pose Detection Server and a 
+  Bevy-based Visualization Client.  
+- The client initiates the connection (game is client).  
+- The architecture allows for future deployment flexibility and component substitution.  
