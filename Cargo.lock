@@ -3379,7 +3379,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pose_server"
+name = "pose"
 version = "0.1.0"
 dependencies = [
  "anyhow",

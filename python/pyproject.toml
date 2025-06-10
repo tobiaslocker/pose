@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "pose"
+version = "0.1.0"
+description = "Pose inference server for rapid prototyping"
+authors = ["Tobias Locker <tobias@tobiaslocker.de>"]
+readme = "README.md"
+packages = [
+    { include = "pose" },
+    { include = "Detection", from = "../generated/python" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+mediapipe = "0.10.8"
+opencv-python = "4.8.1.78"
+numpy = "<2"
+flatbuffers = "25.2.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.0"
+pytest-asyncio = "^0.23.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+tcp-server = "pose.run_server:main"

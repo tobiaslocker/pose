@@ -6,22 +6,15 @@ LAYOUT_WITH_LEGEND()
 Person(user, "Player", "Interacts with the game using camera input")
 
 System_Boundary(c1, "Pose System") {
-    Container(client, "Pose Capture Client", "Python (later C++)", "Captures pose from webcam and sends it to the server")
-    Container(serializer, "Pose Serializer", "FlatBuffers", "Serializes landmark data for network transmission")
-    Container(server, "Server Core", "Rust", "Receives and processes pose data")
-    Container(deserializer, "Pose Deserializer", "Rust", "Deserializes FlatBuffer pose data")
-    Container(matcher, "Pose Matcher / Score Evaluator", "Rust", "Compares poses and calculates similarity score")
-    Container(visualizer, "Visualization Engine", "Bevy", "Displays live and prerecorded poses in 3D")
-    Container(contentRecorder, "Content Recorder", "Rust", "Stores prerecorded choreography")
+    Container(controller, "Pose Controller", "Python/C++", "Detects poses (MediaPipe), serializes via FlatBuffers, and streams binary frames over WebSocket")
+    Container(game, "Game Client (Bevy)", "Rust", "WebSocket client, deserializes FlatBuffers, matches live pose against prerecorded choreography, and visualizes poses and score with Bevy")
+    Container(browserVariant, "Browser-Only Client", "JavaScript/WASM", "Runs MediaPipe JS for in-browser inference, deserializes FlatBuffers, and visualizes via Bevy WASM")
+    Container(contentRecorder, "Content Recorder", "Rust", "Captures and stores prerecorded choreography using FlatBuffers")
 }
 
-Rel(user, client, "Streams pose via camera")
-Rel(client, serializer, "Serializes pose data")
-Rel(serializer, server, "Sends FlatBuffer over TCP")
-Rel(server, deserializer, "Deserializes FlatBuffer")
-Rel(deserializer, matcher, "Sends pose data for comparison")
-Rel(matcher, visualizer, "Updates scene and score")
-Rel(contentRecorder, visualizer, "Provides choreography data")
-
+Rel(user, controller, "Streams raw video to")
+Rel(controller, game, "Streams FlatBuffers over WebSocket")
+Rel(contentRecorder, game, "Provides prerecorded choreography to")
+Rel(contentRecorder, browserVariant, "Provides prerecorded choreography to")
 @enduml
 
