@@ -2,7 +2,7 @@ import os
 import re
 
 ADR_DIR = os.path.join(os.path.dirname(__file__), '../../docs/arch/decisions')
-LOG_PATH = os.path.join(ADR_DIR, 'README.md')
+LOG_PATH = os.path.join(os.path.dirname(__file__), '../../docs/arch/09-architecture-decisions.md')
 
 entries = []
 
@@ -32,8 +32,8 @@ for filename in sorted(os.listdir(ADR_DIR)):
         date_match = re.search(r'^📅\s*(\d{4}-\d{2}-\d{2})', content, re.MULTILINE)
         date = date_match.group(1).strip() if date_match else "?"
 
-        # Build the Markdown link for this ADR
-        md_link = f"[{title}]({filename})"
+        # Build the Markdown link for this ADR (adjusted to point to the subfolder)
+        md_link = f"[{title}](decisions/{filename})"
 
         entries.append({
             'number': filename.split('-')[0],
@@ -49,7 +49,11 @@ status_width = max(len(e['status']) for e in entries + [{'status': 'Status'}])
 date_width = max(len(e['date']) for e in entries + [{'date': 'Date'}])
 
 with open(LOG_PATH, 'w', encoding='utf-8') as f:
-    f.write('# Architecture Decision Log\n\n')
+    # Write the arc42 Section 9 header and intro
+    f.write('# 9. Architecture Decisions\n\n')
+    f.write('This project maintains a structured Architecture Decision Log (ADR).\n\n')
+    f.write('The log helps track key technical decisions over time and the rationale behind them.\n\n')
+    f.write('## Current Decision Log\n\n')
 
     # Header row
     header = (
@@ -78,3 +82,13 @@ with open(LOG_PATH, 'w', encoding='utf-8') as f:
             f"| {e['date'].ljust(date_width)} |\n"
         )
         f.write(line)
+
+    # Write additional notes and conventions section (optional, but useful)
+    f.write('\n')
+    f.write('## Notes\n\n')
+    f.write('- Proposed decisions are marked in yellow.\n')
+    f.write('- This log is updated incrementally as new architecture decisions are made.\n\n')
+    f.write('## Conventions\n\n')
+    f.write('- Decisions are numbered sequentially (`001`, `002`, etc.).\n')
+    f.write('- Each decision is stored as a separate `.md` file under `docs/arch/decisions/`.\n')
+    f.write('- This section provides an index for quick navigation.\n')
