@@ -1,0 +1,21 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_WITH_LEGEND()
+
+System_Boundary(system, "Movement Interaction System") {
+    Container(gameClient, "Game Client", "Rust + Bevy (WebAssembly-compatible)", "Renders pose landmarks and feedback. Receives FlatBuffers pose data via DetectionProvider.")
+    Container(poseServer, "Pose Detection Server", "Python + MediaPipe", "Detects human pose landmarks, sends over TCP.")
+    ContainerDb(referenceData, "Reference Pose Data (Planned)", "FlatBuffers files", "Stored on disk or bundled with the game.")
+}
+
+Person(user, "User", "Moves in front of camera")
+
+System_Ext(camera, "Camera", "Provides real-time video stream")
+
+Rel(user, camera, "Performs movement")
+Rel(camera, poseServer, "Streams video input")
+Rel(poseServer, gameClient, "Sends pose data (FlatBuffers over TCP)")
+Rel(gameClient, referenceData, "Loads for future pose matching")
+Rel(gameClient, user, "Displays live pose feedback")
+
+@enduml

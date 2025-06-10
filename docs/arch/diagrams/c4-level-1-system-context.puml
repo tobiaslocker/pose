@@ -1,0 +1,18 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(user, "User", "Performs movements in front of the camera")
+
+System(gameClient, "Game Client", "Rust + Bevy (native or WASM)", "Visualizes live pose data, planned pose matching, and feedback")
+System_Ext(poseServer, "Pose Detection Source", "Provides pose landmarks via pluggable protocol (TCP/FlatBuffers, WebSocket, etc.)")
+System_Ext(predefinedSequences, "Predefined Motion Sequences", "Reference motion data for comparison (local or remote)")
+System_Ext(camera, "Camera", "Captures live video stream")
+
+Rel(user, camera, "Performs movement")
+Rel(camera, poseServer, "Feeds live video stream (local or remote)")
+Rel(poseServer, gameClient, "Streams pose data (TCP/FlatBuffers or WebSocket)")
+Rel(gameClient, predefinedSequences, "Loads reference poses at runtime (optional)")
+Rel(gameClient, user, "Displays visualization and feedback")
+
+@enduml
+

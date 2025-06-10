@@ -1,0 +1,17 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_WITH_LEGEND()
+
+Container_Boundary(game, "Game Client (Rust + Bevy)") {
+    Component(detectionProvider, "DetectionProvider", "Trait-based plug-in for real-time pose sources")
+    Component(tcpClient, "TcpDetectionProvider", "Current implementation using async mpsc receiver")
+    Component(detectionResource, "Detection Resource", "ECS resource holding latest pose frame")
+    Component(skeleton, "Skeleton Renderer", "Updates pose landmark sprites and draws bones")
+    Component(network, "Network Forwarder", "Parses TCP stream and pushes frames to channel")
+}
+
+Rel(network, tcpClient, "Forwards parsed DetectionResult")
+Rel(tcpClient, detectionResource, "Polled each frame via Detection::system_update()")
+Rel(detectionResource, skeleton, "Provides pose data for rendering")
+@enduml
+
