@@ -5,35 +5,20 @@ It loosely follows Arc42 and uses [C4 Model](https://c4model.com/) diagrams for 
 
 ## Content
 
-1. [Introduction and Goals](01-introduction.md)
-1. [Constraints](02-constraints.md)
-1. [System Context and Scope](03-system-context-and-scope.md)
-1. [Solution Strategy](04-solution-strategy.md)
-1. [Building Block View](05-building-block-view.md)
-1. [Runtime View](06-runtime-view.md)
-1. [Deployment View](07-deployment-view.md)
-1. [Crosscutting Concepts](08-crosscutting-concepts.md)
-1. [Architecture Decisions](09-architecture-decisions.md)
-1. [Quality Requirements](10-quality-requirements.md)
-1. [Risks and Technical Debt](11-risks-and-technical-debt.md)
-1. [Glossary](12-glossary.md)
-
-## TODO Checklist
-
-Progress on documenting the architecture:
-
-- [ ] 01 Introduction
-- [ ] 02 Constraints
-- [x] 03 System Scope and Context
-- [ ] 04 Solution Strategy
-- [x] 05 Building Block View
-- [ ] 06 Runtime View
-- [ ] 07 Deployment View
-- [ ] 08 Cross-cutting Concepts
-- [x] 09 Architecture Decisions
-- [ ] 10 Quality Requirements
-- [ ] 11 Risks and Technical Debt
-- [ ] 12 Glossary
+| Section | Title                                                      | Status                                                        |
+|---------|------------------------------------------------------------|---------------------------------------------------------------|
+| 01      | [Introduction](01-introduction.md)                         | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 02      | [Constraints](02-constraints.md)                           | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 03      | [System Scope and Context](03-system-scope-and-context.md) | ![](https://img.shields.io/badge/status-complete-brightgreen) |
+| 04      | [Solution Strategy](04-solution-strategy.md)               | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 05      | [Building Block View](05-building-block-view.md)           | ![](https://img.shields.io/badge/status-complete-brightgreen) |
+| 06      | [Runtime View](06-runtime-view.md)                         | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 07      | [Deployment View](07-deployment-view.md)                   | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 08      | [Cross-cutting Concepts](08-crosscutting-concepts.md)      | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 09      | [Architecture Decisions](09-architecture-decisions.md)     | ![](https://img.shields.io/badge/status-complete-brightgreen) |
+| 10      | [Quality Requirements](10-quality-requirements.md)         | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 11      | [Risks and Technical Debt](11-risks-and-technical-debt.md) | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
+| 12      | [Glossary](12-glossary.md)                                 | ![](https://img.shields.io/badge/status-todo-lightgrey)       |
 
 ---
 
