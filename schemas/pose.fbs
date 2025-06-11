@@ -9,15 +9,18 @@ table Landmark {
   x: float;
   y: float;
   z: float;
-  availability: Availability;  // Optional via null
+  availability: Availability;
 }
 
 table PoseDetectionResult {
   landmarks: [Landmark];
 }
 
+table Empty {}
+
 union DetectionPayload {
-  PoseDetectionResult
+  PoseDetectionResult,
+  Empty
 }
 
 table DetectionMessage {

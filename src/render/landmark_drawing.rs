@@ -1,8 +1,12 @@
 use crate::components::LandmarkIndex;
 use crate::protocol::Landmark;
 use bevy::prelude::*;
+use bevy::render::view::Visibility;
 
 pub trait LandmarkDrawing {
+    const PRESENCE_THRESHOLD: f32 = 0.5;
+    const VISIBILITY_THRESHOLD: f32 = 0.5;
+
     fn connections() -> &'static [(usize, usize)];
 
     fn num_landmarks() -> usize;
@@ -17,15 +21,23 @@ pub trait LandmarkDrawing {
 
     fn update_landmarks(
         landmarks: &[Landmark],
-        query: &mut Query<(&mut Transform, &LandmarkIndex)>,
+        query: &mut Query<(&mut Transform, &LandmarkIndex, &mut Visibility)>,
         windows: Query<&Window>,
     ) {
         if let Some(window) = windows.iter().next() {
             let width = window.width();
             let height = window.height();
-            for (mut transform, LandmarkIndex(i)) in query.iter_mut() {
-                if let Some(lm) = landmarks.get(*i) {
+            for (mut transform, LandmarkIndex(i), mut visibility) in query.iter_mut() {
+                if let Some(lm) = landmarks.get(*i).filter(|lm| {
+                    lm.availability.as_ref().map_or(false, |av| {
+                        av.presence >= Self::PRESENCE_THRESHOLD
+                            && av.visibility >= Self::VISIBILITY_THRESHOLD
+                    })
+                }) {
                     transform.translation = Self::to_bevy_coords(lm, width, height);
+                    *visibility = Visibility::Visible;
+                } else {
+                    *visibility = Visibility::Hidden;
                 }
             }
         }
@@ -37,9 +49,22 @@ pub trait LandmarkDrawing {
             let height = window.height();
             for &(start_idx, end_idx) in Self::connections() {
                 if let (Some(a), Some(b)) = (landmarks.get(start_idx), landmarks.get(end_idx)) {
-                    let a = Self::to_bevy_coords(a, width, height);
-                    let b = Self::to_bevy_coords(b, width, height);
-                    gizmos.line(a, b, Self::color());
+                    if let (Some(pa), Some(pb)) = (&a.availability, &b.availability) {
+                        if pa.presence < Self::PRESENCE_THRESHOLD
+                            || pb.presence < Self::PRESENCE_THRESHOLD
+                        {
+                            continue;
+                        }
+                        if pa.visibility < Self::VISIBILITY_THRESHOLD
+                            || pb.visibility < Self::VISIBILITY_THRESHOLD
+                        {
+                            continue;
+                        }
+                    }
+
+                    let a_pos = Self::to_bevy_coords(a, width, height);
+                    let b_pos = Self::to_bevy_coords(b, width, height);
+                    gizmos.line(a_pos, b_pos, Self::color());
                 }
             }
         }
@@ -56,6 +81,7 @@ pub trait LandmarkDrawing {
                 Transform::default(),
                 GlobalTransform::default(),
                 LandmarkIndex(i),
+                Visibility::Inherited,
             ));
         }
     }

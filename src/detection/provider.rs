@@ -18,7 +18,7 @@ impl MockDetectionProvider {
 impl DetectionProvider for MockDetectionProvider {
     fn poll(&mut self) -> Option<DetectionResult> {
         self.frame += 1;
-        let t = self.frame as f32 * 0.05; // animation speed
+        let t = self.frame as f32 * 0.05;
 
         Some(DetectionResult {
             landmarks: vec![

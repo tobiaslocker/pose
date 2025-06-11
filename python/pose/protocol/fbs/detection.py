@@ -13,6 +13,7 @@ def parse(pose_landmarker_result) -> bytes:
 
     if len(pose_landmarker_result.pose_landmarks) == 0:
         DetectionMessage.Start(builder)
+        DetectionMessage.AddPayloadType(builder, DetectionPayload.DetectionPayload().Empty)
         detection_message_offset = DetectionMessage.End(builder)
         builder.Finish(detection_message_offset)
         return bytes(builder.Output())
