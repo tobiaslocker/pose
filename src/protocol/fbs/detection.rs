@@ -1,5 +1,4 @@
 use crate::generated::detection;
-use flatbuffers::root;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Availability {
@@ -23,32 +22,41 @@ pub struct DetectionResult {
 pub type PoseDetectionResult = DetectionResult;
 pub type HandDetectionResult = DetectionResult;
 
-pub fn parse(bytes: &[u8]) -> Option<PoseDetectionResult> {
-    let msg = root::<detection::DetectionMessage>(bytes).ok()?;
+pub fn parse(buf: &[u8]) -> Option<DetectionResult> {
+    let msg = flatbuffers::root::<detection::DetectionMessage>(buf).ok()?;
+
     match msg.payload_type() {
         detection::DetectionPayload::PoseDetectionResult => {
-            let pose = msg.payload_as_pose_detection_result()?;
-            let landmarks = pose
-                .landmarks()?
-                .iter()
-                .map(|lm| {
-                    let availability = lm.availability().map(|a| Availability {
-                        visibility: a.visibility(),
-                        presence: a.presence(),
-                    });
+            let pose_result = msg.payload_as_pose_detection_result()?;
+            let landmarks_fb = pose_result.landmarks().unwrap_or_default();
 
-                    Landmark {
-                        x: lm.x(),
-                        y: lm.y(),
-                        z: lm.z(),
-                        availability,
-                    }
+            let landmarks: Vec<Landmark> = landmarks_fb
+                .iter()
+                .map(|lm| Landmark {
+                    x: lm.x(),
+                    y: lm.y(),
+                    z: lm.z(),
+                    availability: lm.availability().map(|avail| {
+                        crate::protocol::fbs::detection::Availability {
+                            visibility: avail.visibility(),
+                            presence: avail.presence(),
+                        }
+                    }),
                 })
                 .collect();
 
             Some(DetectionResult { landmarks })
         }
-        _ => None,
+
+        detection::DetectionPayload::Empty => {
+            eprintln!("Empty payload received — skipping frame.");
+            None
+        }
+
+        other => {
+            eprintln!("Unknown payload type {:?} — skipping frame.", other);
+            None
+        }
     }
 }
 

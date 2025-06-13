@@ -10,7 +10,9 @@ pub struct Detection {
 
 impl Detection {
     pub fn update(&mut self) {
-        self.latest = self.provider.poll();
+        if let Some(result) = self.provider.poll() {
+            self.latest = Some(result);
+        }
     }
 
     pub fn latest(&self) -> Option<&DetectionResult> {

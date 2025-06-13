@@ -56,7 +56,7 @@ impl Skeleton {
     pub fn position_update(
         detection: Res<Detection>,
         mut gizmos: Gizmos,
-        mut query: Query<(&mut Transform, &LandmarkIndex)>,
+        mut query: Query<(&mut Transform, &LandmarkIndex, &mut Visibility)>,
         windows: Query<&Window>,
     ) {
         if let Some(result) = detection.latest() {

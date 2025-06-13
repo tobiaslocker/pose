@@ -40,7 +40,10 @@ where
                     break;
                 }
             } else {
-                eprintln!("Failed to parse message, skipping");
+                eprintln!(
+                    "Failed to parse message, skipping ({} bytes read)",
+                    buffer.len()
+                );
             }
         }
     })
