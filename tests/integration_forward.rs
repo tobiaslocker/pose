@@ -1,4 +1,4 @@
-use pose::network::{forward::forward, tcp::Client};
+use pose::network::{forward::forward, tcp::FramedPayloadStream};
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
 use tokio::sync::mpsc;
@@ -38,12 +38,9 @@ async fn test_forward_with_real_tcp() {
         }
     });
 
-    let mut client = Client::new();
-    client
-        .connect(&addr.ip().to_string(), addr.port())
+    let stream = FramedPayloadStream::connect(&format!("{}", addr))
         .await
-        .unwrap();
-    let stream = client.into_stream();
+        .expect("Tcp connection failed");
 
     let (tx, mut rx) = mpsc::channel(10);
     forward(stream, tx, parse_packet);

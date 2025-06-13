@@ -1,4 +1,5 @@
 import asyncio
+import struct
 
 class Server:
     def __init__(self, host='0.0.0.0', port=9000, queue=asyncio.Queue()):
@@ -12,7 +13,7 @@ class Server:
             if msg is None:
                 print("Send loop received shutdown signal.")
                 break
-            writer.write(msg)
+            writer.write(struct.pack('<I', len(msg)) + msg)
             try:
                 await writer.drain()
             except ConnectionResetError:

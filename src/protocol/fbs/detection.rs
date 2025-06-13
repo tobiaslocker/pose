@@ -44,7 +44,6 @@ pub fn parse(buf: &[u8]) -> Option<DetectionResult> {
                     }),
                 })
                 .collect();
-
             Some(DetectionResult { landmarks })
         }
 
