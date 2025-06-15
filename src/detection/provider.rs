@@ -1,6 +1,5 @@
 use crate::protocol::{DetectionResult, Landmark};
 
-/// A pluggable interface for any source of pose/landmark detection data.
 pub trait DetectionProvider: Send + Sync {
     fn poll(&mut self) -> Option<DetectionResult>;
 }
@@ -225,4 +224,4 @@ impl DetectionProvider for MockDetectionProvider {
     }
 }
 
-pub use crate::network::tcp::TcpDetectionProvider;
+pub use crate::network::provider::ChannelDetectionProvider;

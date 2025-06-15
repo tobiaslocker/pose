@@ -1,91 +1,49 @@
-use std::net::SocketAddr;
-use tokio::io;
+use crate::network::stream::PayloadStream;
+use std::future::Future;
+use std::pin::Pin;
+use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::TcpStream;
 
-use crate::detection::provider::DetectionProvider;
-use crate::protocol::DetectionResult;
-
-use tokio::sync::mpsc::Receiver;
-
-#[derive(Debug)]
-pub enum ConnectionError {
-    Io(io::Error),
-    AddrParse(std::net::AddrParseError),
+pub struct FramedPayloadStream {
+    reader: BufReader<TcpStream>,
 }
 
-pub struct Client {
-    stream: Option<TcpStream>,
-}
-
-impl Client {
-    pub fn new() -> Self {
-        Self { stream: None }
-    }
-
-    pub async fn connect(&mut self, host: &str, port: u16) -> Result<(), ConnectionError> {
-        let addr = format!("{}:{}", host, port)
-            .parse::<SocketAddr>()
-            .map_err(ConnectionError::AddrParse)?;
-
-        let stream = TcpStream::connect(addr)
-            .await
-            .map_err(ConnectionError::Io)?;
-        self.stream = Some(stream);
-        Ok(())
-    }
-
-    pub fn into_stream(mut self) -> TcpStream {
-        self.stream
-            .take()
-            .expect("Client was not connected before calling into_stream()")
+impl FramedPayloadStream {
+    pub async fn connect(addr: &str) -> std::io::Result<Self> {
+        use tokio::net::TcpStream;
+        let stream = TcpStream::connect(addr).await?;
+        Ok(Self {
+            reader: BufReader::new(stream),
+        })
     }
 }
 
-pub struct TcpDetectionProvider {
-    receiver: Receiver<DetectionResult>,
-}
+impl PayloadStream for FramedPayloadStream
+where
+    Self: Send,
+{
+    fn next_payload<'a>(
+        &'a mut self,
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<u8>>> + Send + 'a>> {
+        Box::pin(async move {
+            let mut length_buf = [0u8; 4];
+            if self.reader.read_exact(&mut length_buf).await.is_err() {
+                return None;
+            }
 
-impl TcpDetectionProvider {
-    pub fn new(receiver: Receiver<DetectionResult>) -> Self {
-        Self { receiver }
-    }
-}
+            let length = u32::from_le_bytes(length_buf) as usize;
 
-impl DetectionProvider for TcpDetectionProvider {
-    fn poll(&mut self) -> Option<DetectionResult> {
-        self.receiver.try_recv().ok()
-    }
-}
+            if length == 0 || length > 65536 {
+                eprintln!("[TCP] Unexpected message length: {length} bytes — skipping!");
+                return Some(Vec::new());
+            }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::protocol::DetectionResult;
-    use crate::protocol::fbs::detection::{Availability, Landmark};
-    use tokio::sync::mpsc;
+            let mut buffer = vec![0; length];
+            if self.reader.read_exact(&mut buffer).await.is_err() {
+                return None;
+            }
 
-    #[tokio::test]
-    async fn test_tcp_detection_provider_poll() {
-        let (tx, rx) = mpsc::channel(1);
-
-        let dummy = DetectionResult {
-            landmarks: vec![Landmark {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-                availability: Some(Availability {
-                    visibility: 0.9,
-                    presence: 0.8,
-                }),
-            }],
-        };
-
-        tx.send(dummy.clone()).await.expect("send failed");
-
-        let mut provider = TcpDetectionProvider::new(rx);
-
-        let result = provider.poll();
-        assert!(result.is_some(), "Expected Some(DetectionResult)");
-        assert_eq!(result.unwrap(), dummy);
+            Some(buffer)
+        })
     }
 }

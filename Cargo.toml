@@ -8,3 +8,7 @@ bevy = { version = "0.16", features = ["bevy_sprite"] }
 flatbuffers = "25.2.10"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
+tungstenite = "0.21"
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+url = "2"

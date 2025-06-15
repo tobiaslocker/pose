@@ -23,11 +23,11 @@ impl Detection {
         detection.update();
     }
 
-    pub fn from_tcp(rx: tokio::sync::mpsc::Receiver<DetectionResult>) -> Self {
-        use crate::detection::provider::TcpDetectionProvider;
+    pub fn from_channel(rx: tokio::sync::mpsc::Receiver<DetectionResult>) -> Self {
+        use crate::detection::provider::ChannelDetectionProvider;
 
         Self {
-            provider: Box::new(TcpDetectionProvider::new(rx)),
+            provider: Box::new(ChannelDetectionProvider::new(rx)),
             latest: None,
         }
     }

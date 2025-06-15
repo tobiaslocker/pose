@@ -1,5 +1,6 @@
 import asyncio
-from pose.network.tcp.server import Server
+#from pose.network.tcp.server import Server
+from pose.network.ws.server import Server
 from pose.detection import PoseLandmarkDetection
 from pose.network import forward
 from pose.protocol.fbs.detection import parse

@@ -1,58 +1,41 @@
-use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::io::{AsyncReadExt, BufReader};
+use crate::network::stream::PayloadStream;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 
-/// Spawns an async task to forward parsed messages from the stream.
-///
-/// `T`: type of parsed message (e.g., Pose)
-/// `P`: parser function: `&[u8] -> Option<T>`
-///
-pub fn forward<T, P, S>(stream: S, tx: Sender<T>, parser: P) -> JoinHandle<()>
+pub fn forward<T, P>(
+    mut stream: impl PayloadStream + Send + 'static,
+    tx: Sender<T>,
+    parser: P,
+) -> JoinHandle<()>
 where
-    S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     T: Send + 'static,
     P: Fn(&[u8]) -> Option<T> + Send + Sync + 'static,
 {
     tokio::spawn(async move {
-        let mut reader = BufReader::new(stream);
-        let mut buffer = Vec::new();
-
-        loop {
-            let mut length_buf = [0u8; 4];
-
-            if reader.read_exact(&mut length_buf).await.is_err() {
-                eprintln!("Connection closed or failed");
-                break;
-            }
-
-            let length = u32::from_le_bytes(length_buf) as usize;
-            buffer.resize(length, 0);
-
-            if reader.read_exact(&mut buffer).await.is_err() {
-                eprintln!("Failed to read full message");
-                break;
-            }
-
-            if let Some(parsed) = parser(&buffer) {
+        while let Some(payload) = stream.next_payload().await {
+            if let Some(parsed) = parser(&payload) {
                 if tx.send(parsed).await.is_err() {
                     eprintln!("Receiver dropped, stopping forwarder");
                     break;
                 }
             } else {
                 eprintln!(
-                    "Failed to parse message, skipping ({} bytes read)",
-                    buffer.len()
+                    "Failed to parse message, skipping ({} bytes)",
+                    payload.len()
                 );
             }
         }
+
+        eprintln!("PayloadStream ended, forwarder exiting");
     })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::io::AsyncWriteExt;
+    use crate::network::forward;
+    use std::pin::Pin;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::sync::mpsc;
     use tokio::time::{Duration, timeout};
 
@@ -74,12 +57,40 @@ mod tests {
         Some(TestPacket(u32::from_le_bytes(bytes.try_into().ok()?)))
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "current_thread")]
     async fn test_forward_sends_parsed_packets() {
         let (mut client_side, server_side) = tokio::io::duplex(64);
         let (tx, mut rx) = mpsc::channel(10);
 
-        forward(server_side, tx, parse_packet);
+        struct DummyStream {
+            inner: tokio::io::DuplexStream,
+        }
+
+        impl PayloadStream for DummyStream {
+            fn next_payload<'a>(
+                &'a mut self,
+            ) -> Pin<Box<dyn std::future::Future<Output = Option<Vec<u8>>> + Send + 'a>>
+            {
+                Box::pin(async move {
+                    let mut length_buf = [0u8; 4];
+                    if self.inner.read_exact(&mut length_buf).await.is_err() {
+                        return None;
+                    }
+
+                    let length = u32::from_le_bytes(length_buf) as usize;
+                    let mut buffer = vec![0; length];
+                    if self.inner.read_exact(&mut buffer).await.is_err() {
+                        return None;
+                    }
+
+                    Some(buffer)
+                })
+            }
+        }
+
+        let stream = DummyStream { inner: server_side };
+
+        forward::forward(stream, tx, parse_packet);
 
         let packets = vec![TestPacket(42), TestPacket(7)];
         for pkt in &packets {
