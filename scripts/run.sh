@@ -17,11 +17,16 @@ CLIENT_PREFIX="\033[1;36m[POSE CLIENT]\033[0m"
 MAKE_PREFIX="\033[1;33m[POSE MAKE]\033[0m"
 
 FORCE=false
+SHOW_PREVIEW=false
 
 for arg in "$@"; do
   case $arg in
     --force)
       FORCE=true
+      shift
+      ;;
+    --show-inference-preview)
+      SHOW_PREVIEW=true
       shift
       ;;
     *)
@@ -72,8 +77,15 @@ else
 fi
 
 echo -e "${SETUP_PREFIX} Starting Python server..."
-poetry run --directory "${PROJECT_ROOT}/python" python "$PY_SERVER_PATH" --model "$MODEL_PATH" \
-  > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
+
+if [[ "$SHOW_PREVIEW" == true ]]; then
+  poetry run --directory "${PROJECT_ROOT}/python" python "$PY_SERVER_PATH" --model "$MODEL_PATH" --show-preview \
+    > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
+else
+  poetry run --directory "${PROJECT_ROOT}/python" python "$PY_SERVER_PATH" --model "$MODEL_PATH" \
+    > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
+fi
+
 SERVER_PID=$!
 
 echo -e "${SETUP_PREFIX} Waiting for Python server on port $SERVER_PORT..."
