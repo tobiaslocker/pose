@@ -40,8 +40,6 @@ generated_path = os.path.join(project_root, "generated", "python")
 print("Adding to sys.path:", generated_path)
 sys.path.append(generated_path)
 
-import Pose.PoseFrame as PoseFrame
-import Pose.Keypoint as Keypoint
 
 
 mp_pose = mp.solutions.pose
@@ -81,9 +79,6 @@ def run(model: str, num_poses: int,
     cap = cv2.VideoCapture(camera_id)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("127.0.0.1", 9000))
 
     # Visualization parameters
     row_size = 50  # pixels
@@ -162,43 +157,6 @@ def run(model: str, num_poses: int,
                     mp_pose.POSE_CONNECTIONS,
                     mp_drawing_styles.get_default_pose_landmarks_style())
 
-
-                # FlatBuffer serialization
-                builder = flatbuffers.Builder(1024)
-                keypoints = []
-
-                for landmark in pose_landmarks:
-                    x = landmark.x
-                    y = landmark.y
-                    z = landmark.z
-                    confidence = landmark.visibility  # or use landmark.presence
-
-                    kp = Keypoint.KeypointStart(builder)
-                    Keypoint.KeypointAddX(builder, x)
-                    Keypoint.KeypointAddY(builder, y)
-                    Keypoint.KeypointAddZ(builder, z)
-                    Keypoint.KeypointAddConfidence(builder, confidence)
-                    kp = Keypoint.KeypointEnd(builder)
-                    keypoints.append(kp)
-
-                # FlatBuffers requires elements pushed in reverse
-                PoseFrame.PoseFrameStartKeypointsVector(builder, len(keypoints))
-                for kp in reversed(keypoints):
-                    builder.PrependUOffsetTRelative(kp)
-                keypoints_vec = builder.EndVector()
-
-                PoseFrame.PoseFrameStart(builder)
-                PoseFrame.PoseFrameAddKeypoints(builder, keypoints_vec)
-                pose_frame = PoseFrame.PoseFrameEnd(builder)
-                builder.Finish(pose_frame)
-
-                buf = builder.Output()
-                msg_len = struct.pack('>I', len(buf))  # 4-byte length prefix
-
-                try:
-                    sock.sendall(msg_len + buf)
-                except BrokenPipeError:
-                    print("Connection lost.")
 
         if (output_segmentation_masks and DETECTION_RESULT):
             if DETECTION_RESULT.segmentation_masks is not None:

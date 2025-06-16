@@ -1,5 +1,4 @@
-use crate::detection::provider::DetectionProvider;
-use crate::protocol::DetectionResult;
+use crate::protocol::LandmarkFrame;
 use tokio::io;
 use tokio::sync::mpsc::Receiver;
 
@@ -9,18 +8,18 @@ pub enum ConnectionError {
     AddrParse(std::net::AddrParseError),
 }
 
-pub struct ChannelDetectionProvider {
-    receiver: Receiver<DetectionResult>,
+pub struct ChannelStreamProvider {
+    receiver: Receiver<LandmarkFrame>,
 }
 
-impl ChannelDetectionProvider {
-    pub fn new(receiver: Receiver<DetectionResult>) -> Self {
+impl ChannelStreamProvider {
+    pub fn new(receiver: Receiver<LandmarkFrame>) -> Self {
         Self { receiver }
     }
 }
 
-impl DetectionProvider for ChannelDetectionProvider {
-    fn poll(&mut self) -> Option<DetectionResult> {
+impl crate::landmark::StreamProvider for ChannelStreamProvider {
+    fn poll(&mut self) -> Option<LandmarkFrame> {
         self.receiver.try_recv().ok()
     }
 }
@@ -28,16 +27,16 @@ impl DetectionProvider for ChannelDetectionProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::detection::provider::DetectionProvider;
-    use crate::protocol::DetectionResult;
-    use crate::protocol::fbs::detection::{Availability, Landmark};
+    use crate::landmark::StreamProvider;
+    use crate::protocol::LandmarkFrame;
+    use crate::protocol::fbs::landmark::{Availability, Landmark};
     use tokio::sync::mpsc;
 
     #[tokio::test]
     async fn test_tcp_detection_provider_poll() {
         let (tx, rx) = mpsc::channel(1);
 
-        let dummy = DetectionResult {
+        let dummy = LandmarkFrame {
             landmarks: vec![Landmark {
                 x: 1.0,
                 y: 2.0,
@@ -47,14 +46,15 @@ mod tests {
                     presence: 0.8,
                 }),
             }],
+            timestamp: 1234.5678,
         };
 
         tx.send(dummy.clone()).await.expect("send failed");
 
-        let mut provider = ChannelDetectionProvider::new(rx);
+        let mut provider = ChannelStreamProvider::new(rx);
 
         let result = provider.poll();
-        assert!(result.is_some(), "Expected Some(DetectionResult)");
+        assert!(result.is_some(), "Expected Some(LandmarkFrame)");
         assert_eq!(result.unwrap(), dummy);
     }
 }

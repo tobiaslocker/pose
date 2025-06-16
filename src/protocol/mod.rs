@@ -1,3 +1,3 @@
 pub mod fbs;
 
-pub use fbs::detection::{Availability, DetectionResult, Landmark, parse};
+pub use fbs::landmark::{Availability, Landmark, LandmarkFrame, parse};

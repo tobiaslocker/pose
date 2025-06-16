@@ -18,9 +18,10 @@ MAKE_PREFIX="\033[1;33m[POSE MAKE]\033[0m"
 
 FORCE=false
 SHOW_PREVIEW=false
+INPUT_VIDEO=""
 
-for arg in "$@"; do
-  case $arg in
+while [[ $# -gt 0 ]]; do
+  case $1 in
     --force)
       FORCE=true
       shift
@@ -29,8 +30,12 @@ for arg in "$@"; do
       SHOW_PREVIEW=true
       shift
       ;;
+    --input-video)
+      INPUT_VIDEO="$2"
+      shift 2
+      ;;
     *)
-      echo -e "${SETUP_PREFIX} Unknown argument: $arg"
+      echo -e "${SETUP_PREFIX} Unknown argument: $1"
       exit 1
       ;;
   esac
@@ -78,13 +83,18 @@ fi
 
 echo -e "${SETUP_PREFIX} Starting Python server..."
 
+CMD="poetry run --directory \"${PROJECT_ROOT}/python\" python \"$PY_SERVER_PATH\" --model \"$MODEL_PATH\""
+
 if [[ "$SHOW_PREVIEW" == true ]]; then
-  poetry run --directory "${PROJECT_ROOT}/python" python "$PY_SERVER_PATH" --model "$MODEL_PATH" --show-preview \
-    > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
-else
-  poetry run --directory "${PROJECT_ROOT}/python" python "$PY_SERVER_PATH" --model "$MODEL_PATH" \
-    > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
+  CMD+=" --show-preview"
 fi
+
+if [[ -n "$INPUT_VIDEO" ]]; then
+  CMD+=" --input-video \"$INPUT_VIDEO\""
+fi
+
+eval "$CMD" \
+  > >(stdbuf -oL sed "s/^/$(echo -e "${SERVER_PREFIX} ")/") 2>&1 &
 
 SERVER_PID=$!
 

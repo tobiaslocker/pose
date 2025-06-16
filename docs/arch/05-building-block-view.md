@@ -9,19 +9,21 @@ The system consists of two primary containers and a modular detection pipeline:
 #### 🎮 Game Client (Rust + Bevy)
 
 - Visualizes human pose landmarks in real time.
-- Receives pose data via TCP using a pluggable `DetectionProvider` interface.
+- Receives pose data via **WebSocket** using a pluggable `DetectionProvider` interface.
 - Uses Bevy’s ECS to manage state and rendering.
 - Updates the scene based on new pose frames.
 - Architecture supports alternative data sources (e.g., browser JS, iOS, embedded).
 - Ready to integrate pose comparison and scoring.
+- Records detection results for playback.
 
 ---
 
 #### 📡 Pose Detection Server (Python)
 
-- Captures video input using a webcam.
+- Captures video input using a webcam or video file.
 - Uses MediaPipe to extract human pose landmarks.
-- Serializes pose data using FlatBuffers and sends it over TCP.
+- Serializes pose data using FlatBuffers and sends it over **WebSocket**.
+- Includes `video_time_ms` for playback precision.
 - Designed to be replaced by alternative detection endpoints (e.g. iOS app, JS app, embedded).
 
 ---
@@ -29,7 +31,7 @@ The system consists of two primary containers and a modular detection pipeline:
 #### 🔁 Modular Detection Interface
 
 - The game client includes a `DetectionProvider` trait.
-- Current implementation is `TcpDetectionProvider`, wrapping an async mpsc receiver.
+- Current implementation uses `ws::FramedPayloadStream` with an async channel.
 - Future implementations may pull directly from JavaScript (browser), mobile app, or hardware devices.
 
 ---
@@ -38,6 +40,7 @@ The system consists of two primary containers and a modular detection pipeline:
 
 - Will store predefined motion sequences in FlatBuffers format.
 - Loaded at runtime for pose comparison and scoring.
+- Playback controller replays stored sequences into ECS.
 
 ---
 
@@ -45,15 +48,17 @@ The system consists of two primary containers and a modular detection pipeline:
 
 | Container             | Technology              | Protocol     | Notes                                       |
 |-----------------------|-------------------------|--------------|---------------------------------------------|
-| Game Client           | Rust, Bevy, WebAssembly | TCP + FB     | Browser-ready. Modular source architecture. |
-| Pose Detection Server | Python, MediaPipe       | TCP + FB     | To be replaced in production variants.      |
+| Game Client           | Rust, Bevy, WebAssembly | WebSocket + FB | Browser-ready. Modular source architecture. |
+| Pose Detection Server | Python, MediaPipe       | WebSocket + FB | To be replaced in production variants.      |
 | Pose Data Format      | FlatBuffers             | —            | Shared between live and recorded input.     |
 
+---
 
 #### System Container Diagram (C4 Level 2)
 
 ![System Container Diagram](diagrams/c4-level-2-system-container.svg)
 
+---
 
 ### 5.2 Game Client Component View
 
@@ -61,36 +66,36 @@ The Game Client is structured as a set of ECS-based systems and modular interfac
 
 #### Key Components
 
-- **DetectionProvider**
+- **PayloadStream**
   - Trait defining the interface for any pose data source.
-  - Implemented via TCP channel for now.
+  - Implemented via `ws::FramedPayloadStream` (WebSocket transport).
   
+- **DetectionProvider**
+  - Wraps an async `mpsc::Receiver<DetectionResult>`.
+  - Polled every frame to update internal state.
+
 - **Detection Resource**
-  - Wraps a `DetectionProvider`.
-  - Updated each frame via `Detection::system_update()`.
   - Holds the latest `DetectionResult`.
+  - Updated each frame via `Detection::system_update()`.
 
-- **Render Pipeline**
-  - Uses Bevy entities tagged with `LandmarkIndex` to represent joint markers.
-  - `Skeleton::position_update()` updates transforms and draws bones via gizmos.
-  - Render logic is decoupled and 2D-optimized.
+- **Skeleton Renderer**
+  - Updates Bevy entities based on landmark indices.
+  - Draws bones and markers via gizmos.
 
-- **Network Forwarder**
-  - Runs in a background Tokio task.
-  - Parses FlatBuffers over TCP and forwards results via an mpsc channel.
+- **RecordingBuffer**
+  - Records streamed `DetectionResult`s with `video_time_ms` when enabled.
+  - Output saved to FlatBuffers or JSON for reuse.
 
-- **Startup Systems**
-  - Set up camera, spawn initial landmark sprites, load detection provider.
+- **PlaybackController**
+  - Replays a recorded sequence into the ECS with accurate timing.
+  - Supports pausing, seeking, and synchronized visualization.
 
-#### Future Extensions
+- **PoseMatcher** (Planned)
+  - Compares the current live detection to the playback pose.
+  - Calculates a similarity score (0–100%) based on landmark distance.
 
-- Pose matching and scoring system based on `DetectionResult`.
-- UI components for feedback, level control, or debugging.
-- Additional detection providers (e.g., JS or mobile bridge).
+---
 
-### Container Component Diagram: Game Client (C4 Level 3)
-
-
+#### Container Component Diagram: Game Client (C4 Level 3)
 
 ![Container Component Diagram: Game Client](diagrams/c4-level-3-component-game-client.svg)
-

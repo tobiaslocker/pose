@@ -1,29 +1,31 @@
 use bevy::prelude::*;
-use pose::network::forward::forward;
-use pose::network::ws::FramedPayloadStream;
-use pose::protocol::{DetectionResult, parse};
-use pose::render::skeleton::Skeleton;
-use pose::resources::Detection;
-use tokio::sync::mpsc;
+use bevy_kira_audio::AudioPlugin;
+use bevy_tokio_tasks::TokioTasksPlugin;
+use bevy_tokio_tasks::TokioTasksRuntime;
+use pose::character::Player;
+use pose::realm::Choreography;
 
-pub fn setup(mut commands: Commands) {
-    commands.spawn((Camera2d::default(),));
+#[derive(States, Default, Debug, Clone, Eq, PartialEq, Hash)]
+enum GameState {
+    #[default]
+    Playing,
 }
 
-#[tokio::main]
-async fn main() {
-    let (tx, rx) = mpsc::channel::<DetectionResult>(32);
-    let stream = FramedPayloadStream::connect("ws://127.0.0.1:9000")
-        .await
-        .expect("WebSocket connection failed");
-
-    tokio::spawn(forward(stream, tx, parse));
-
+fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(Detection::from_channel(rx))
-        .add_systems(Startup, (setup, Skeleton::setup))
-        .add_systems(Update, Detection::system_update)
-        .add_systems(Update, Skeleton::position_update)
+        .add_plugins(AudioPlugin)
+        .add_plugins(TokioTasksPlugin::default())
+        .insert_state(GameState::Playing)
+        .add_systems(Startup, setup)
+        .add_systems(OnEnter(GameState::Playing), Choreography::start)
+        .add_systems(Update, Choreography::update)
+        .add_systems(Update, Player::update)
         .run();
+}
+
+fn setup(mut commands: Commands, runtime: Res<TokioTasksRuntime>) {
+    commands.spawn(Camera2d::default());
+    let player = Player::new(&mut commands, &runtime);
+    commands.insert_resource(player);
 }

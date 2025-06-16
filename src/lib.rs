@@ -1,9 +1,8 @@
-pub mod components;
-pub mod detection;
+pub mod character;
+pub mod landmark;
 pub mod network;
 pub mod protocol;
-pub mod render;
-pub mod resources;
+pub mod realm;
 
 #[allow(warnings)]
 #[path = "../generated/rust/pose_generated.rs"]

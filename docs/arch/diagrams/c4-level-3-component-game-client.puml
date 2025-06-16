@@ -3,15 +3,20 @@
 LAYOUT_WITH_LEGEND()
 
 Container_Boundary(game, "Game Client (Rust + Bevy)") {
-    Component(detectionProvider, "DetectionProvider", "Trait-based plug-in for real-time pose sources")
-    Component(tcpClient, "TcpDetectionProvider", "Current implementation using async mpsc receiver")
+    Component(payloadStream, "FramedPayloadStream", "WebSocket-based framed FlatBuffer stream (ws module)")
+    Component(detectionProvider, "DetectionProvider", "Receives pose frames from PayloadStream via channel")
     Component(detectionResource, "Detection Resource", "ECS resource holding latest pose frame")
     Component(skeleton, "Skeleton Renderer", "Updates pose landmark sprites and draws bones")
-    Component(network, "Network Forwarder", "Parses TCP stream and pushes frames to channel")
+    Component(recording, "RecordingBuffer", "Records streamed pose frames with timestamps")
+    Component(playback, "PlaybackController", "Feeds recorded frames into ECS for playback")
+    Component(matching, "PoseMatcher", "Compares live pose vs. playback (planned)")
 }
 
-Rel(network, tcpClient, "Forwards parsed DetectionResult")
-Rel(tcpClient, detectionResource, "Polled each frame via Detection::system_update()")
+Rel(payloadStream, detectionProvider, "Pushes parsed DetectionResult")
+Rel(detectionProvider, detectionResource, "Polled each frame")
 Rel(detectionResource, skeleton, "Provides pose data for rendering")
+Rel(detectionProvider, recording, "Records DetectionResult when enabled")
+Rel(playback, detectionResource, "Feeds playback frame into ECS")
+Rel(detectionResource, matching, "Provides live pose")
+Rel(playback, matching, "Provides reference pose")
 @enduml
-
