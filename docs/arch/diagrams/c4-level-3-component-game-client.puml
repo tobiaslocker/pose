@@ -1,17 +1,20 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 LAYOUT_WITH_LEGEND()
-
-Container_Boundary(game, "Game Client (Rust + Bevy)") {
-    Component(detectionProvider, "DetectionProvider", "Trait-based plug-in for real-time pose sources")
-    Component(tcpClient, "TcpDetectionProvider", "Current implementation using async mpsc receiver")
-    Component(detectionResource, "Detection Resource", "ECS resource holding latest pose frame")
-    Component(skeleton, "Skeleton Renderer", "Updates pose landmark sprites and draws bones")
-    Component(network, "Network Forwarder", "Parses TCP stream and pushes frames to channel")
+Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Executes choreography playback, player comparison, character rendering, and scoring.")
+Container_Boundary(gameRuntime, "Game Runtime") {
+  Component(routine, "Routine", "Component + System", "Handles playback of recorded landmark sequences and synchronized audio. Owns one or more Characters for visualization.")
+  Component(character, "Character", "Component + System", "Pose-driven entity with landmark and skeleton rendering. Receives pose data from a LandmarkStream.")
+  Component(scoring, "Scoring", "Logic + Optional System", "Compares two Characters by evaluating their current landmark states.")
+  Component(landmarkStream, "Landmark Stream", "Trait", "Abstract interface for retrieving landmark data.")
+  Component(liveStream, "Live Stream", "Implementation", "Provides live LandmarkFrames via WebSocket or embedded inference.")
+  Component(recordedStream, "Recorded Stream", "Implementation", "Provides pre-recorded LandmarkFrames from memory.")
 }
-
-Rel(network, tcpClient, "Forwards parsed DetectionResult")
-Rel(tcpClient, detectionResource, "Polled each frame via Detection::system_update()")
-Rel(detectionResource, skeleton, "Provides pose data for rendering")
+Rel(routine, landmarkStream, "Owns and updates")
+Rel_U(liveStream, landmarkStream, "Implements")
+Rel_U(recordedStream, landmarkStream, "Implements")
+Rel(liveStream, character, "Feeds landmark frames")
+Rel(recordedStream, character, "Feeds landmark frames")
+Rel(scoring, landmarkStream, "Compares data from two Landmark Streams")
+Rel(routine, character, "Creates and connects to streams")
 @enduml
-

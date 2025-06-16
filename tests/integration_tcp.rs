@@ -8,7 +8,7 @@ use pose::generated::detection::{
     Availability, AvailabilityArgs, DetectionMessage, DetectionMessageArgs, DetectionPayload,
     Landmark, LandmarkArgs, PoseDetectionResult, PoseDetectionResultArgs,
 };
-use pose::protocol::fbs::detection::{
+use pose::protocol::fbs::landmark::{
     Availability as ParsedAvailability, Landmark as ParsedLandmark, parse,
 };
 
@@ -56,6 +56,7 @@ async fn test_tcp_flatbuffer_parse_end_to_end() {
             &mut builder,
             &PoseDetectionResultArgs {
                 landmarks: Some(landmarks_vec),
+                timestamp: 123.123,
             },
         );
 
@@ -107,4 +108,5 @@ async fn test_tcp_flatbuffer_parse_end_to_end() {
     );
 
     assert_eq!(parsed.landmarks[1].z, 6.0);
+    assert_eq!(parsed.timestamp, 123.123);
 }

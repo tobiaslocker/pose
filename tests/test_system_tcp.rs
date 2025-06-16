@@ -1,11 +1,12 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
-use pose::detection::provider::DetectionProvider;
+
 use pose::generated::detection::{
     Availability, AvailabilityArgs, DetectionMessage, DetectionMessageArgs, DetectionPayload,
     Landmark, LandmarkArgs, PoseDetectionResult, PoseDetectionResultArgs,
 };
+use pose::landmark::StreamProvider;
 use pose::network::forward::forward;
-use pose::network::provider::ChannelDetectionProvider;
+use pose::network::provider::ChannelStreamProvider;
 use pose::network::tcp::FramedPayloadStream;
 use pose::protocol::parse;
 use std::io::Write;
@@ -42,6 +43,7 @@ fn create_dummy_flatbuffer() -> Vec<u8> {
         &mut builder,
         &PoseDetectionResultArgs {
             landmarks: Some(landmarks_vec),
+            timestamp: 999.999,
         },
     );
 
@@ -77,7 +79,7 @@ async fn test_tcp_provider_end_to_end() {
 
     forward(stream, tx, parse);
 
-    let mut provider = ChannelDetectionProvider::new(rx);
+    let mut provider = ChannelStreamProvider::new(rx);
     let mut retries = 0;
     let mut result = None;
 
@@ -91,4 +93,5 @@ async fn test_tcp_provider_end_to_end() {
     let detection = result.unwrap();
     assert_eq!(detection.landmarks.len(), 1);
     assert_eq!(detection.landmarks[0].x, 1.0);
+    assert_eq!(detection.timestamp, 999.999);
 }

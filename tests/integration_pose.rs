@@ -4,7 +4,7 @@ use pose::generated::detection::{
     Landmark, LandmarkArgs, PoseDetectionResult, PoseDetectionResultArgs,
     finish_detection_message_buffer,
 };
-use pose::protocol::fbs::detection::parse;
+use pose::protocol::fbs::landmark::parse;
 
 #[test]
 fn test_parse_pose_integration() {
@@ -44,6 +44,7 @@ fn test_parse_pose_integration() {
         &mut builder,
         &PoseDetectionResultArgs {
             landmarks: Some(landmarks_vec),
+            timestamp: 42.42,
         },
     );
 
@@ -64,4 +65,5 @@ fn test_parse_pose_integration() {
     assert_eq!(parsed.landmarks[0].x, 1.0);
     assert_eq!(parsed.landmarks[0].y, 2.0);
     assert_eq!(parsed.landmarks[1].z, 6.0);
+    assert_eq!(parsed.timestamp, 42.42);
 }

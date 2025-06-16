@@ -3,14 +3,15 @@
 ## 3.1 System Context
 
 The system enables real-time, movement-based interaction using pose landmarks detected from live 
-camera input. It is designed as a flexible, modular architecture that supports multiple deployment 
-scenarios, enabling different types of motion-based experiences.
+camera input or prerecorded video. It is designed as a flexible, modular architecture that supports 
+multiple deployment scenarios, enabling different types of motion-based experiences.
 
 ### 3.1.1 Purpose and Scope
 
 The system provides a core framework for:
-- Live pose landmark detection from camera input
+- Live pose landmark detection from webcam or video
 - Real-time visualization of detected poses
+- Recording of detection sequences for later playback
 - Comparison of live movement against predefined motion sequences (planned feature)
 - Display of visual feedback and performance scoring (planned feature)
 
@@ -22,20 +23,21 @@ The architecture is intended to be **platform-agnostic** and **extensible**, sup
 
 ### 3.1.2 Key Concepts
 
-- **Input:** Live camera stream → body landmarks detected via MediaPipe or equivalent
+- **Input:** Webcam or video file → pose landmarks via MediaPipe
 - **Processing:** Pose data streamed into a visualization & interaction client
 - **Matching:** Live pose compared to reference motion sequences (planned)
 - **Output:** Real-time visualization and feedback to user
+- **Storage:** Record and save detected sequences for replay and analysis
 
 ### 3.1.3 Architecture Principles
 
 - The **Game Client** is the central runtime application, implemented in Rust with Bevy (WASM capable).
 - A pluggable `DetectionProvider` abstraction allows the Game Client to support multiple sources of 
   pose data:
-    - Current: Python Pose Detection Server over TCP + FlatBuffers
-    - Planned: WebSocket / WebRTC bridge to browser JS
-    - Planned: Mobile app (iOS/Android) acting as controller
-    - Planned: Embedded device with onboard detection
+    - Current: Python Pose Detection Server over WebSocket + FlatBuffers
+    - Planned: WebSocket/WebRTC bridge to JS browser API
+    - Planned: iOS/Android mobile controller with onboard detection
+    - Planned: Embedded pose detection sources
 - The Game Client architecture is ECS-based, with clear separation of pose data, visualization, and 
   game logic.
 - The architecture supports deployment in:
@@ -54,11 +56,11 @@ The architecture is intended to be **platform-agnostic** and **extensible**, sup
 
 ### 3.1.5 C4 Level 1 Diagram (System Context Diagram)
 
-![C4 Level 1 Diagram](diagrams/c4-level-1-system-context.svg?v=2)
+![C4 Level 1 Diagram](diagrams/c4-level-1-system-context.svg)
 
 ### 3.1.6 Environment Notes
 
-- The current prototype uses a **Python-based Pose Detection Server** with TCP and FlatBuffers.
+- The current prototype uses a **Python-based Pose Detection Server** with WebSocket and FlatBuffers.
 - The Game Client is the **client** in the network model and owns game logic and visualization.
 - The system is designed to gracefully evolve toward **direct JS → WASM bridges** and **mobile controller models**.
 - Future optimizations will address latency, transport flexibility, and multi-platform support.

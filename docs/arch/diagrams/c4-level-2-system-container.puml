@@ -1,21 +1,18 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 LAYOUT_WITH_LEGEND()
-
-System_Boundary(system, "Movement Interaction System") {
-    Container(gameClient, "Game Client", "Rust + Bevy (WebAssembly-compatible)", "Renders pose landmarks and feedback. Receives FlatBuffers pose data via DetectionProvider.")
-    Container(poseServer, "Pose Detection Server", "Python + MediaPipe", "Detects human pose landmarks, sends over TCP.")
-    ContainerDb(referenceData, "Reference Pose Data (Planned)", "FlatBuffers files", "Stored on disk or bundled with the game.")
+System_Boundary(poseGame, "Pose Game") {
+  Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Visualizes pose-controlled characters. Manages game state, audio playback, scoring logic, and consumes landmark streams from live or recorded sources.")
+  Container(visionEngine, "Vision Engine", "Computer Vision Module", "Processes video input and produces per-frame structured visual data such as landmarks, keypoints, or classifications. Streams this data or records it for later use.")
+  Container(assetStorage, "Asset Storage", "Media and Motion Repository", "Stores recorded motion sequences and synchronized media assets. Can be local, embedded, or remote.")
 }
-
-Person(user, "User", "Moves in front of camera")
-
-System_Ext(camera, "Camera", "Provides real-time video stream")
-
-Rel(user, camera, "Performs movement")
-Rel(camera, poseServer, "Streams video input")
-Rel(poseServer, gameClient, "Sends pose data (FlatBuffers over TCP)")
-Rel(gameClient, referenceData, "Loads for future pose matching")
-Rel(gameClient, user, "Displays live pose feedback")
-
+Person(player, "Human Player", "Controls a character through body movement.")
+Person(creator, "Content Creator", "Records motion sequences using the Vision Engine.")
+Person(manager, "Content Manager", "Uploads and organizes assets for use in the game.")
+Rel(player, visionEngine, "Provides live video input")
+Rel(visionEngine, gameRuntime, "Streams structured vision data (e.g., LandmarkFrames)")
+Rel(gameRuntime, assetStorage, "Loads motion data and media")
+Rel(visionEngine, assetStorage, "Stores recorded motion sequences")
+Rel(creator, visionEngine, "Captures motion sequences")
+Rel(manager, assetStorage, "Uploads and manages assets")
 @enduml
