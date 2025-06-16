@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.16", features = ["bevy_sprite"] }
+bevy_kira_audio = "0.23.0"
+bevy-tokio-tasks = "0.16"
 flatbuffers = "25.2.10"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
@@ -12,3 +14,8 @@ tungstenite = "0.21"
 tokio-tungstenite = "0.21"
 futures-util = "0.3"
 url = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rodio = "0.17"
+chrono = "0.4.41"
+
