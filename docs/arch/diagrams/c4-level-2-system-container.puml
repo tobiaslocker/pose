@@ -1,19 +1,17 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 LAYOUT_WITH_LEGEND()
-
-Person(user, "User", "Performs a dance or pose routine in front of a webcam")
-
-System_Boundary(game, "Pose Game System") {
-    Container(bevyApp, "Game Client", "Rust + Bevy", "Visualizes pose landmarks, records pose data, replays sequences, compares live movement to choreography, and displays feedback")
-    
-    Container(pythonServer, "Pose Detection Server", "Python + MediaPipe", "Captures webcam or video input, runs pose detection, streams landmarks via WebSocket (FlatBuffers)")
-
-    ContainerDb(recordings, "Reference Pose Storage", "FlatBuffers / JSON", "Stores prerecorded pose sequences for playback and matching")
+System_Boundary(poseGame, "Pose Game") {
+  Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Visualizes pose-controlled characters. Manages game state, audio playback, and consumes landmark streams from live or recorded sources.")
+  Container(poseEngine, "Pose Inference Engine", "Implementation-agnostic", "Extracts pose landmarks from video input and streams timestamped landmark frames. Also records motion sequences for reuse.")
+  Container(assetStorage, "Asset Storage", "Media and Motion Repository", "Stores recorded motion sequences and synchronized media assets. Can be local, embedded, or remote.")
 }
-
-Rel(user, pythonServer, "Moves in front of webcam")
-Rel(pythonServer, bevyApp, "WebSocket + FlatBuffers", "Sends live or video-based pose landmarks")
-Rel(bevyApp, recordings, "Reads/writes pose sequences for playback and matching")
-Rel(user, bevyApp, "Receives feedback via visuals/audio")
+Person(player, "Human Player", "Controls a character through body movement.")
+Person(dev, "Developer", "Creates routines and tests gameplay logic.")
+Rel(player, poseEngine, "Provides live video input")
+Rel(poseEngine, gameRuntime, "Streams LandmarkFrames")
+Rel(gameRuntime, assetStorage, "Loads motion data and media")
+Rel(poseEngine, assetStorage, "Stores recorded motion sequences")
+Rel(dev, assetStorage, "Authors and edits assets")
 @enduml
+
