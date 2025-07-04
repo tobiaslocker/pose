@@ -1,17 +1,13 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-Person(user, "User", "Performs movements in front of a webcam")
+Person(user, "User", "Performs movements in front of webcam")
 
-System(gameClient, "Game Client", "Rust + Bevy (native or WASM): Visualizes live pose data, records and replays pose sequences, provides matching and feedback")
+System(gameClient, "Game Client", "Rust + Bevy: Visualizes pose data and compares against reference")
 
-System(poseServer, "Pose Detection Server", "Python + MediaPipe: Captures webcam or video input, detects poses, and streams landmarks via WebSocket")
+System(poseServer, "Pose Detection Server", "Python + MediaPipe: Streams pose landmarks via WebSocket")
 
-System_Ext(predefinedSequences, "Predefined Motion Sequences", "FlatBuffers / JSON: Stores reference motion data used for pose matching")
-
-Rel(user, poseServer, "Performs movements in front of webcam or video input")
-Rel(poseServer, gameClient, "Streams pose landmarks via WebSocket and FlatBuffers")
-Rel(gameClient, predefinedSequences, "Loads reference pose sequences for matching")
-Rel(gameClient, user, "Displays real-time pose feedback and matching results")
-
+Rel(user, poseServer, "Moves in front of webcam")
+Rel(poseServer, gameClient, "Streams pose landmarks (FlatBuffers over WS)")
+Rel(gameClient, user, "Displays visual feedback and score")
 @enduml

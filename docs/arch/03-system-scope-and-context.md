@@ -37,6 +37,10 @@ It is intended for experimentation with body-driven interaction, choreography tr
 | Desktop (current)    | Python + MediaPipe over WS   | Bevy native (Rust)        |
 | Future (WASM)        | JS bridge or mobile stream    | Bevy WASM (browser)       |
 
+### 3.1.5 C4 Level 1 Diagram (System Context Diagram)
+
+![C4 Level 1 Diagram](diagrams/c4-level-1-system-context.svg?v=2)
+
 ## 5. Building Block View
 
 ### 5.1 Whitebox Overall System (Container View)
@@ -86,23 +90,4 @@ It is intended for experimentation with body-driven interaction, choreography tr
 
 ---
 
-### C4 Diagrams
-
-#### System Context (C4 Level 1)
-
-```plantuml
-@startuml
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-
-Person(user, "User", "Performs movements in front of webcam")
-
-System(gameClient, "Game Client", "Rust + Bevy: Visualizes pose data and compares against reference")
-
-System(poseServer, "Pose Detection Server", "Python + MediaPipe: Streams pose landmarks via WebSocket")
-
-Rel(user, poseServer, "Moves in front of webcam")
-Rel(poseServer, gameClient, "Streams pose landmarks (FlatBuffers over WS)")
-Rel(gameClient, user, "Displays visual feedback and score")
-@enduml
-```
 
