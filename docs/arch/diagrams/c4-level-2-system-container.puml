@@ -1,17 +1,15 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_WITH_LEGEND()
 
-System_Boundary(poseApp, "Pose App") {
-  Container(game, "Game Client", "Rust + Bevy", "Renders pose skeletons, compares poses, shows score")
-  Container(controller, "Python Pose Server", "Python + MediaPipe", "Streams landmark data over WebSocket")
-  Container(fileInput, "Playback Source", "FlatBuffers/JSON", "Feeds prerecorded pose data")
+System_Boundary(poseGame, "Pose Game") {
+  Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Renders character poses, handles scoring, streams pose data, plays audio")
+  Container(pythonServer, "Pose Detection Server", "Python + MediaPipe", "Streams pose landmarks via WebSocket")
 }
 
-Person(user, "User", "Performs movements")
+Person(user, "User", "Performs movement")
 
-Rel(user, controller, "Provides live webcam input")
-Rel(controller, game, "Streams pose landmarks")
-Rel(fileInput, game, "Feeds prerecorded frames")
-Rel(game, user, "Shows visualization and score")
+Rel(user, pythonServer, "Moves in front of webcam")
+Rel(pythonServer, gameRuntime, "Streams pose landmarks (FlatBuffers over WebSocket)")
+Rel(gameRuntime, user, "Displays feedback and score")
 @enduml
-
