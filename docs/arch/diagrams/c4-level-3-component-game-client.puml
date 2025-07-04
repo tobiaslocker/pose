@@ -1,20 +1,22 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-LAYOUT_WITH_LEGEND()
-Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Executes choreography playback, player comparison, character rendering, and scoring.")
-Container_Boundary(gameRuntime, "Game Runtime") {
-  Component(routine, "Routine", "Component + System", "Handles playback of recorded landmark sequences and synchronized audio. Owns one or more Characters for visualization.")
-  Component(character, "Character", "Component + System", "Pose-driven entity with landmark and skeleton rendering. Receives pose data from a LandmarkStream.")
-  Component(scoring, "Scoring", "Logic + Optional System", "Compares two Characters by evaluating their current landmark states.")
-  Component(landmarkStream, "Landmark Stream", "Trait", "Abstract interface for retrieving landmark data.")
-  Component(liveStream, "Live Stream", "Implementation", "Provides live LandmarkFrames via WebSocket or embedded inference.")
-  Component(recordedStream, "Recorded Stream", "Implementation", "Provides pre-recorded LandmarkFrames from memory.")
-}
-Rel(routine, landmarkStream, "Owns and updates")
-Rel_U(liveStream, landmarkStream, "Implements")
-Rel_U(recordedStream, landmarkStream, "Implements")
-Rel(liveStream, character, "Feeds landmark frames")
-Rel(recordedStream, character, "Feeds landmark frames")
-Rel(scoring, landmarkStream, "Compares data from two Landmark Streams")
-Rel(routine, character, "Creates and connects to streams")
+
+Container(game, "Game Client", "Rust + Bevy")
+
+Component(landmarkStream, "Landmark Stream", "Trait", "Unified interface for pose sources")
+Component(wsStream, "ws_stream", "System", "Receives live frames over WebSocket")
+Component(fileStream, "file_stream", "System", "Feeds frames from file")
+Component(scorePose, "score_pose_similarity", "System", "Compares live and reference poses")
+Component(draw, "draw_character", "System", "Renders landmark skeletons")
+Component(ui, "update_score_text", "System", "Displays score as text")
+Component(setup, "setup", "System", "Spawns camera, audio, entities")
+
+Rel(setup, wsStream, "Spawns")
+Rel(setup, fileStream, "Spawns")
+Rel(wsStream, landmarkStream, "Implements")
+Rel(fileStream, landmarkStream, "Implements")
+Rel(scorePose, landmarkStream, "Reads")
+Rel(draw, landmarkStream, "Visualizes")
+Rel(ui, scorePose, "Reads score")
+
 @enduml

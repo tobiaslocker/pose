@@ -1,18 +1,17 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
-LAYOUT_WITH_LEGEND()
-System_Boundary(poseGame, "Pose Game") {
-  Container(gameRuntime, "Game Runtime", "Rust + Bevy", "Visualizes pose-controlled characters. Manages game state, audio playback, scoring logic, and consumes landmark streams from live or recorded sources.")
-  Container(visionEngine, "Vision Engine", "Computer Vision Module", "Processes video input and produces per-frame structured visual data such as landmarks, keypoints, or classifications. Streams this data or records it for later use.")
-  Container(assetStorage, "Asset Storage", "Media and Motion Repository", "Stores recorded motion sequences and synchronized media assets. Can be local, embedded, or remote.")
+
+System_Boundary(poseApp, "Pose App") {
+  Container(game, "Game Client", "Rust + Bevy", "Renders pose skeletons, compares poses, shows score")
+  Container(controller, "Python Pose Server", "Python + MediaPipe", "Streams landmark data over WebSocket")
+  Container(fileInput, "Playback Source", "FlatBuffers/JSON", "Feeds prerecorded pose data")
 }
-Person(player, "Human Player", "Controls a character through body movement.")
-Person(creator, "Content Creator", "Records motion sequences using the Vision Engine.")
-Person(manager, "Content Manager", "Uploads and organizes assets for use in the game.")
-Rel(player, visionEngine, "Provides live video input")
-Rel(visionEngine, gameRuntime, "Streams structured vision data (e.g., LandmarkFrames)")
-Rel(gameRuntime, assetStorage, "Loads motion data and media")
-Rel(visionEngine, assetStorage, "Stores recorded motion sequences")
-Rel(creator, visionEngine, "Captures motion sequences")
-Rel(manager, assetStorage, "Uploads and manages assets")
+
+Person(user, "User", "Performs movements")
+
+Rel(user, controller, "Provides live webcam input")
+Rel(controller, game, "Streams pose landmarks")
+Rel(fileInput, game, "Feeds prerecorded frames")
+Rel(game, user, "Shows visualization and score")
 @enduml
+

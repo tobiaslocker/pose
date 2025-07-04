@@ -88,6 +88,14 @@ It is intended for experimentation with body-driven interaction, choreography tr
 - `update_score_text`: Updates score overlay text each frame.
 - `start_inference`: Starts the Python controller and waits for readiness.
 
+#### System Container Diagram (C4 Level 2)
+
+![System Container Diagram](diagrams/c4-level-2-system-container.svg)
+
+### Container Component Diagram: Game Client (C4 Level 3)
+
+![Container Component Diagram: Game Client](diagrams/c4-level-3-component-game-client.svg)
+
 ---
 
 
