@@ -17,5 +17,14 @@ Container_Boundary(gameRuntime, "Game Runtime") {
   Component(PoseScore, "PoseScore", "Component", "Stores current similarity score")
   Component(ScoreText, "ScoreText", "Component", "Marks UI text element")
 }
+
+Rel(file_stream, NonPlayable, "Updates")
+Rel(ws_stream, Playable, "Updates")
+Rel(draw_character, LatestLandmarkFrame, "Reads from")
+Rel(score_pose_similarity, Playable, "Reads")
+Rel(score_pose_similarity, NonPlayable, "Reads")
+Rel(score_pose_similarity, PoseScore, "Updates")
+Rel(update_score_text, PoseScore, "Reads")
+Rel(update_score_text, ScoreText, "Updates")
 @enduml
 
