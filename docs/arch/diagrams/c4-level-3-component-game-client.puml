@@ -19,7 +19,9 @@ Container_Boundary(gameRuntime, "Game Runtime") {
 }
 
 Rel(file_stream, NonPlayable, "Updates")
+Rel(file_stream, LatestLandmarkFrame, "Updates (NonPlayable)")
 Rel(ws_stream, Playable, "Updates")
+Rel(ws_stream, LatestLandmarkFrame, "Updates (Playable)")
 Rel(draw_character, LatestLandmarkFrame, "Reads from")
 Rel(score_pose_similarity, Playable, "Reads")
 Rel(score_pose_similarity, NonPlayable, "Reads")
