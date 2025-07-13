@@ -1,17 +1,31 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
-LAYOUT_WITH_LEGEND()
 
-Container_Boundary(game, "Game Client (Rust + Bevy)") {
-    Component(detectionProvider, "DetectionProvider", "Trait-based plug-in for real-time pose sources")
-    Component(tcpClient, "TcpDetectionProvider", "Current implementation using async mpsc receiver")
-    Component(detectionResource, "Detection Resource", "ECS resource holding latest pose frame")
-    Component(skeleton, "Skeleton Renderer", "Updates pose landmark sprites and draws bones")
-    Component(network, "Network Forwarder", "Parses TCP stream and pushes frames to channel")
+Container(gameRuntime, "Game Runtime", "Rust + Bevy")
+
+Container_Boundary(gameRuntime, "Game Runtime") {
+  Component(file_stream, "file_stream", "System", "Feeds NonPlayable with frame data from file based on audio")
+  Component(ws_stream, "ws_stream", "System", "Updates Playable with live pose frames")
+  Component(draw_character, "draw_character", "System", "Renders landmark dots and skeleton lines")
+  Component(score_pose_similarity, "score_pose_similarity", "System", "Computes similarity score between poses")
+  Component(update_score_text, "update_score_text", "System", "Updates UI text with score")
+
+  Component(Playable, "Playable", "Component", "Marks live pose entity")
+  Component(NonPlayable, "NonPlayable", "Component", "Marks reference pose entity")
+  Component(LatestLandmarkFrame, "LatestLandmarkFrame", "Component", "Holds pose frame data")
+  Component(PoseScore, "PoseScore", "Component", "Stores current similarity score")
+  Component(ScoreText, "ScoreText", "Component", "Marks UI text element")
 }
 
-Rel(network, tcpClient, "Forwards parsed DetectionResult")
-Rel(tcpClient, detectionResource, "Polled each frame via Detection::system_update()")
-Rel(detectionResource, skeleton, "Provides pose data for rendering")
+Rel(file_stream, NonPlayable, "Updates")
+Rel(file_stream, LatestLandmarkFrame, "Updates (NonPlayable)")
+Rel(ws_stream, Playable, "Updates")
+Rel(ws_stream, LatestLandmarkFrame, "Updates (Playable)")
+Rel(draw_character, LatestLandmarkFrame, "Reads from")
+Rel(score_pose_similarity, Playable, "Reads")
+Rel(score_pose_similarity, NonPlayable, "Reads")
+Rel(score_pose_similarity, PoseScore, "Updates")
+Rel(update_score_text, PoseScore, "Reads")
+Rel(update_score_text, ScoreText, "Updates")
 @enduml
 
