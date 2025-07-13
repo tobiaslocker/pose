@@ -34,105 +34,106 @@ const SKELETON_CONNECTIONS: &[(usize, usize)] = &[
 ];
 
 fn main() -> std::io::Result<()> {
-    let file = std::fs::File::open("assets/energia-de-gostosa.json")?;
-    let reader = std::io::BufReader::new(file);
-    let sequence: Sequence = serde_json::from_reader(reader)?;
-    let (tx, rx) = mpsc::channel::<LandmarkFrame>(32);
+    let mut sequences = Vec::new();
+    let dir = std::fs::read_dir("assets/energia-de-gostosa").expect("Failed to read directory");
 
+    for entry in dir {
+        let path = entry.expect("Failed to read entry").path();
+        if path.extension().and_then(|s| s.to_str()) == Some("json") {
+            let file = std::fs::File::open(&path).expect("Failed to open JSON file");
+            let reader = std::io::BufReader::new(file);
+            let sequence: Sequence = serde_json::from_reader(reader).expect("Failed to parse JSON");
+            sequences.push(sequence);
+        }
+    }
+
+    let (tx, rx) = mpsc::channel::<LandmarkFrame>(32);
     let mut controller_process = start_inference()?;
 
     std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(websocket_task(tx));
     });
-    let frames = VecDeque::new();
-    let recorded_sequence = RecordedSequence { frames };
 
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(AudioPlugin)
-        .insert_resource(sequence)
-        .insert_resource(recorded_sequence)
+        .insert_resource(Sequences { sequences })
         .insert_resource(LandmarkFrameReceiver(rx))
         .add_systems(Startup, setup)
         .add_systems(Update, file_stream)
         .add_systems(Update, ws_stream)
         .add_systems(Update, draw_character)
-        .add_systems(Update, record_live_frames)
-        //.add_systems(Update, score_pose_similarity)
+        .add_systems(Update, score_pose_similarity)
         //.add_systems(Update, update_score_text)
         .run();
     let _ = controller_process.kill();
     Ok(())
 }
 
-fn record_live_frames(
-    mut buffer: ResMut<RecordedSequence>,
-    audio_instances: Res<Assets<AudioInstance>>,
-    audio_handle: Res<AudioHandle>,
-    query: Query<&LatestLandmarkFrame, With<Playable>>,
-    ref_query: Query<&LatestLandmarkFrame, (With<NonPlayable>, Without<Playable>)>,
-    mut has_saved: Local<bool>,
-) {
-    let Some(instance) = audio_instances.get(&audio_handle.0) else {
-        return;
-    };
-
-    match instance.state() {
-        bevy_kira_audio::PlaybackState::Playing { .. } => {
-            if let (Ok(frame), Ok(ref_frame)) = (query.single(), ref_query.single()) {
-                if let (Some(live), Some(recorded)) = (&frame.0, &ref_frame.0) {
-                    if buffer
-                        .frames
-                        .back()
-                        .map_or(true, |last| last.timestamp != recorded.timestamp)
-                    {
-                        let mut live_clone = live.clone();
-                        live_clone.timestamp = recorded.timestamp;
-                        buffer.frames.push_back(live_clone);
-                        println!("recorded {} frames", buffer.frames.len());
-                    }
-                }
-            }
-        }
-
-        bevy_kira_audio::PlaybackState::Stopped => {
-            if !*has_saved && !buffer.frames.is_empty() {
-                *has_saved = true;
-                println!("Audio finished. Saving {} frames...", buffer.frames.len());
-
-                let timestamp = chrono::Utc::now().format("%Y%m%d-%H%M%S");
-                let filename = format!("recorded-choreo-{}.json", timestamp);
-                let path = std::path::Path::new("recordings").join(filename);
-
-                if let Err(e) = std::fs::create_dir_all("recordings") {
-                    eprintln!("❌ Failed to create directory: {e}");
-                } else {
-                    match std::fs::File::create(&path) {
-                        Ok(f) => {
-                            if let Err(e) = serde_json::to_writer_pretty(f, &*buffer) {
-                                eprintln!("❌ Failed to write JSON: {e}");
-                            } else {
-                                println!("✅ Recording saved to {}", path.display());
-                            }
-                        }
-                        Err(e) => eprintln!("❌ Failed to create file: {e}"),
-                    }
-                }
-            }
-        }
-        _ => {}
-    }
-}
-
 #[derive(Component)]
 struct ScoreText;
 
+//fn update_score_text(
+//    query_score: Query<&PoseScore, With<Playable>>,
+//    mut query_text: Query<&mut Text, With<ScoreText>>,
+//) {
+//    if let (Ok(score), Ok(mut text)) = (query_score.single(), query_text.single_mut()) {
+//        text.0 = format!("Score: {:.1}", score.0);
+//    }
+//}
+
 fn score_pose_similarity(
-    mut live_query: Query<(&LatestLandmarkFrame, &mut PoseScore), With<Playable>>,
-    ref_query: Query<&LatestLandmarkFrame, (With<NonPlayable>, Without<Playable>)>,
+    live_query: Query<(&LatestLandmarkFrame, &mut PoseScore), With<Playable>>,
+    ref_query: Query<
+        (&LatestLandmarkFrame, Entity),
+        (With<NonPlayable>, Changed<LatestLandmarkFrame>),
+    >,
+    time: Res<Time>,
 ) {
+    let Ok((live_frame, _score)) = live_query.single() else {
+        return;
+    };
+    let Some(live) = &live_frame.0 else {
+        return;
+    };
+
+    for (ref_frame, entity) in ref_query.iter() {
+        if let Some(reference) = &ref_frame.0 {
+            // Here you would compute a score between `live` and `reference`
+            println!(
+                "NPC {:?} frame updated at t={}",
+                entity,
+                time.elapsed_secs_f64()
+            );
+            // println!("Score vs {:?} = {:.2}", entity, score);
+        }
+    }
 }
+//fn score_pose_similarity(
+//    mut live_query: Query<(&LatestLandmarkFrame, &mut PoseScore), With<Playable>>,
+//    ref_query: Query<&LatestLandmarkFrame, (With<NonPlayable>, Changed<LatestLandmarkFrame>)>,
+//    time: Res<Time>,
+//    mut last_update: Local<Option<f64>>,
+//) {
+//    if let Ok(ref_frame) = ref_query.single() {
+//        println!("Here-------");
+//    }
+//
+//    if let (Ok((live_frame, mut _score)), Ok(ref_frame)) =
+//        (live_query.single_mut(), ref_query.single())
+//    {
+//        println!("Here");
+//        if let (Some(live), Some(reference)) = (&live_frame.0, &ref_frame.0) {
+//            let now = time.elapsed_secs_f64();
+//            if let Some(last) = *last_update {
+//                let delta = now - last;
+//                println!("⏱️ NPC frame delta: {:.4} sec", delta);
+//            }
+//            *last_update = Some(now);
+//        }
+//    }
+//}
 
 #[derive(Component, Debug)]
 pub struct PoseScore(pub f32);
@@ -154,7 +155,6 @@ pub struct Landmark {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LandmarkFrame {
     pub landmarks: Vec<Landmark>,
-    pub timestamp: f64,
 }
 
 #[derive(Resource, Debug, Deserialize, Serialize)]
@@ -163,8 +163,14 @@ pub struct RecordedSequence {
 }
 
 #[derive(Resource, Debug, Deserialize)]
+pub struct Sequences {
+    pub sequences: Vec<Sequence>,
+}
+
+#[derive(Resource, Debug, Deserialize)]
 pub struct Sequence {
     pub frames: VecDeque<LandmarkFrame>,
+    pub fps: f64,
 }
 
 #[derive(Resource)]
@@ -189,27 +195,28 @@ fn start_inference() -> std::io::Result<Child> {
         .arg(format!("{}/python", controller_path))
         .arg("run")
         .arg("python")
-        .arg("pose/run_server.py")
+        .arg("pose_tool.py")
+        .arg("serve")
         .arg("--model")
         .arg(format!(
             "{}/models/pose_landmarker_lite.task",
             controller_path
         ))
-        .arg("--show-preview")
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn();
-    let addr = format!("localhost:9000");
+
+    let addr = "localhost:9000";
     let start = std::time::Instant::now();
 
     while start.elapsed().as_secs() < 5 {
-        if TcpStream::connect(&addr).is_ok() {
+        if TcpStream::connect(addr).is_ok() {
             return child;
         }
         thread::sleep(Duration::from_millis(200));
     }
-    let _ = child.unwrap().kill();
 
+    let _ = child.unwrap().kill();
     Err(std::io::Error::new(
         std::io::ErrorKind::TimedOut,
         "Inference server did not start in time",
@@ -285,11 +292,7 @@ fn parse(buf: &[u8]) -> Option<LandmarkFrame> {
                 })
                 .collect();
 
-            let timestamp = pose_result.timestamp();
-            Some(LandmarkFrame {
-                landmarks,
-                timestamp,
-            })
+            Some(LandmarkFrame { landmarks })
         }
 
         detection::DetectionPayload::Empty => {
@@ -305,7 +308,7 @@ fn parse(buf: &[u8]) -> Option<LandmarkFrame> {
 }
 
 fn setup(mut commands: Commands, audio: Res<Audio>, asset_server: Res<AssetServer>) {
-    let sound = asset_server.load("energia.ogg");
+    let sound = asset_server.load("energia-de-gostosa/energia-de-gostosa.ogg");
     let handle = audio.play(sound).handle();
     commands.insert_resource(AudioHandle(handle));
     commands.spawn(Camera2d::default());
@@ -320,24 +323,12 @@ fn setup(mut commands: Commands, audio: Res<Audio>, asset_server: Res<AssetServe
         NonPlayable,
         LatestLandmarkFrame(None),
     ));
-    commands.spawn((
-        Text::new(""),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(12.0),
-            left: Val::Px(12.0),
-            ..default()
-        },
-        ScoreText,
-    ));
-}
-
-fn update_score_text(
-    query_score: Query<&PoseScore, With<Playable>>,
-    mut query_text: Query<&mut Text, With<ScoreText>>,
-) {
-    if let (Ok(score), Ok(mut text)) = (query_score.single(), query_text.single_mut()) {
-        text.0 = format!("Score: {:.1}", score.0);
+    for i in 0..2 {
+        commands.spawn((
+            Name::new(format!("NPC {}", i + 1)),
+            NonPlayable,
+            LatestLandmarkFrame(None),
+        ));
     }
 }
 
@@ -394,31 +385,31 @@ fn draw_character(
 fn file_stream(
     audio_instances: Res<Assets<AudioInstance>>,
     audio_handle: Res<AudioHandle>,
-    mut sequence: ResMut<Sequence>,
+    sequences: ResMut<Sequences>,
     mut query: Query<&mut LatestLandmarkFrame, With<NonPlayable>>,
 ) {
     let Some(instance) = audio_instances.get(&audio_handle.0) else {
         return;
     };
-
-    let Ok(mut current_frame) = query.single_mut() else {
-        println!("No character entity with CurrentLandmarkFrame");
+    let mut npcs: Vec<_> = query.iter_mut().collect();
+    if npcs.len() != sequences.sequences.len() {
+        eprintln!(
+            "Mismatch: {} sequences for {} NPCs",
+            sequences.sequences.len(),
+            npcs.len()
+        );
         return;
-    };
+    }
 
     match instance.state() {
         bevy_kira_audio::PlaybackState::Playing { position } => {
-            while let Some(frame) = sequence.frames.front() {
-                if frame.timestamp / 1000.0 <= position {
-                    let frame = sequence.frames.pop_front().unwrap();
-                    current_frame.0 = Some(frame);
-                } else {
-                    break;
+            for (i, sequence) in sequences.sequences.iter().enumerate() {
+                let expected_frame_index = (position * sequence.fps) as usize;
+                if let Some(frame) = sequence.frames.get(expected_frame_index) {
+                    npcs[i].0 = Some(frame.clone());
                 }
             }
         }
-        other_state => {
-            println!("Audio not playing: {:?}", other_state);
-        }
+        _ => {}
     }
 }

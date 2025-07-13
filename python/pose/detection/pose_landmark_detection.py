@@ -65,24 +65,28 @@ class PoseLandmarkDetection:
 
     async def next(self):
         success, frame = self.cap.read()
-
-        frame_height, frame_width = frame.shape[:2]
-        x1, y1 = 0, 0
-        x2, y2 = int(frame_width / 2.5), frame_height
-
-        masked_frame = frame.copy()
-        masked_frame[:] = 0
-
-        masked_frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2]
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
-
-
         if not success:
             return None
+
+        rgb_image = None
+
         if self.source == Source.INDEX:
             frame = cv2.flip(frame, 1)
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        elif self.source == Source.FILE:
+            frame_height, frame_width = frame.shape[:2]
+            x1, y1 = 0, 0
+            x2, y2 = int(frame_width / 2.5), frame_height
 
-        rgb_image = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2RGB)
+            masked_frame = frame.copy()
+            masked_frame[:] = 0
+
+            masked_frame[y1:y2, x1:x2] = frame[y1:y2, x1:x2]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+            rgb_image = cv2.cvtColor(masked_frame, cv2.COLOR_BGR2RGB)
+
+
+
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
         self.detector.detect_async(mp_image, time.time_ns() // 1_000_000)
 
